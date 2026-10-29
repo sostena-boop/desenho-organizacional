@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simulador de CCE e FCE</title>
+  <style>
+    :root {
+      --bg: #f5f7fa;
+      --panel: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #d1d5db;
+      --header: #0f3b5f;
+      --header2: #164e7a;
+      --accent: #1d4ed8;
+      --danger: #b91c1c;
+      --danger-bg: #fee2e2;
+      --ok: #166534;
+      --ok-bg: #dcfce7;
+      --warn: #92400e;
+      --warn-bg: #fef3c7;
+      --shadow: 0 1px 4px rgba(15, 23, 42, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.35;
+    }
+
+    header {
+      background: var(--header);
+      color: #fff;
+      padding: 18px 24px;
+      border-bottom: 4px solid var(--header2);
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    header p {
+      margin: 6px 0 0;
+      font-size: 13px;
+      opacity: 0.9;
+    }
+
+    main {
+      max-width: 1500px;
+      margin: 0 auto;
+      padding: 18px;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 14px;
+      position: sticky;
+      top: 0;
+      z-index: 5;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .card .label {
+      font-size: 12px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      font-weight: 700;
+    }
+
+    .card .value {
+      font-size: 28px;
+      margin-top: 4px;
+      font-weight: 700;
+    }
+
+    .card.positive { background: var(--ok-bg); border-color: #86efac; }
+    .card.zero { background: var(--warn-bg); border-color: #fcd34d; }
+    .card.negative { background: var(--danger-bg); border-color: #fca5a5; }
+    .card.positive .value { color: var(--ok); }
+    .card.zero .value { color: var(--warn); }
+    .card.negative .value { color: var(--danger); }
+
+    .alert {
+      display: none;
+      background: var(--danger-bg);
+      color: var(--danger);
+      border: 1px solid #fca5a5;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-weight: 700;
+      margin: 0 0 14px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
+    button {
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text);
+      border-radius: 8px;
+      padding: 8px 11px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    button:hover { background: #eef2ff; }
+    button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+    button.primary:hover { background: #1e40af; }
+    button.danger { color: var(--danger); }
+    button.small { padding: 5px 8px; font-size: 12px; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    section.panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
+    .panel h2 {
+      margin: 0;
+      padding: 12px 14px;
+      background: #e5eef7;
+      color: #0f3b5f;
+      font-size: 17px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .panel-body { padding: 12px; }
+
+    .table-wrap {
+      overflow: auto;
+      max-height: 520px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    thead th {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: #f3f4f6;
+      color: #374151;
+      font-weight: 700;
+      border-bottom: 1px solid var(--border);
+      padding: 8px;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    tbody td {
+      border-bottom: 1px solid #e5e7eb;
+      padding: 7px 8px;
+      vertical-align: middle;
+    }
+
+    tbody tr:nth-child(even) { background: #fafafa; }
+
+    select, input[type="number"] {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 7px;
+      font-size: 13px;
+      background: #fff;
+    }
+
+    input[type="number"] { max-width: 90px; }
+
+    .num { text-align: right; white-space: nowrap; }
+    .muted { color: var(--muted); font-size: 12px; }
+
+    .reference {
+      margin-top: 16px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .reference summary {
+      cursor: pointer;
+      padding: 12px 14px;
+      font-weight: 700;
+      background: #f3f4f6;
+    }
+
+    .reference .table-wrap { border: none; border-radius: 0; max-height: 360px; }
+
+    .toast {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      background: #111827;
+      color: #fff;
+      padding: 10px 12px;
+      border-radius: 8px;
+      display: none;
+      box-shadow: var(--shadow);
+      font-size: 13px;
+      z-index: 10;
+    }
+
+    @media (max-width: 980px) {
+      .grid { grid-template-columns: 1fr; }
+      .summary { grid-template-columns: 1fr; position: static; }
+      main { padding: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Simulador de CCE e FCE</h1>
+    <p>Simulação offline de extinção e criação de CCE 1.xx e FCE 1.xx com base em CCE unitário.</p>
+  </header>
+  <main>
+    <div class="summary" aria-live="polite">
+      <div class="card">
+        <div class="label">Pontos liberados</div>
+        <div class="value" id="releasedPoints">0,00</div>
+      </div>
+      <div class="card">
+        <div class="label">Pontos consumidos</div>
+        <div class="value" id="usedPoints">0,00</div>
+      </div>
+      <div class="card" id="balanceCard">
+        <div class="label">Saldo remanescente</div>
+        <div class="value" id="balancePoints">0,00</div>
+      </div>
+    </div>
+    <div id="negativeAlert" class="alert">Saldo negativo: a proposta consome mais pontos do que libera.</div>
+    <div class="actions">
+      <button class="primary" id="copyBtn">Copiar resultado</button>
+      <button id="csvBtn">Exportar CSV</button>
+      <button class="danger" id="clearBtn">Limpar simulação</button>
+    </div>
+    <div class="grid">
+      <section class="panel">
+        <h2>Cargos/Funções a extinguir</h2>
+        <div class="panel-body">
+          <div class="table-wrap">
+            <table id="extinctTable">
+              <thead>
+                <tr>
+                  <th style="min-width: 160px;">Cargo/Função</th>
+                  <th>Qtd.</th>
+                  <th>Remuneração</th>
+                  <th>CCE unitário</th>
+                  <th>Total pontos</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <p><button id="addExtinctBtn">Adicionar linha</button></p>
+        </div>
+      </section>
+      <section class="panel">
+        <h2>Cargos/Funções a criar</h2>
+        <div class="panel-body">
+          <div class="table-wrap">
+            <table id="createTable">
+              <thead>
+                <tr>
+                  <th style="min-width: 160px;">Cargo/Função</th>
+                  <th>Qtd.</th>
+                  <th>Remuneração</th>
+                  <th>CCE unitário</th>
+                  <th>Total pontos</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <p><button id="addCreateBtn">Adicionar linha</button></p>
+        </div>
+      </section>
+    </div>
+    <details class="reference" open>
+      <summary>Tabela de referência — FCE 1.xx e CCE 1.xx</summary>
+      <div class="table-wrap">
+        <table id="referenceTable">
+          <thead>
+            <tr>
+              <th>Cargo/Função</th>
+              <th>Remuneração</th>
+              <th>CCE unitário</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </details>
+  </main>
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const cargos = [
+      { codigo: 'FCE 1.17', remuneracao: 16765.90, pontos: 4.79 },
+      { codigo: 'FCE 1.16', remuneracao: 14045.67, pontos: 4.01 },
+      { codigo: 'FCE 1.15', remuneracao: 12196.47, pontos: 3.49 },
+      { codigo: 'FCE 1.14', remuneracao: 10432.37, pontos: 2.98 },
+      { codigo: 'FCE 1.13', remuneracao: 8651.81, pontos: 2.47 },
+      { codigo: 'FCE 1.12', remuneracao: 6513.87, pontos: 1.86 },
+      { codigo: 'FCE 1.11', remuneracao: 5193.87, pontos: 1.48 },
+      { codigo: 'FCE 1.10', remuneracao: 4455.87, pontos: 1.27 },
+      { codigo: 'FCE 1.09', remuneracao: 3498.47, pontos: 1.00 },
+      { codigo: 'FCE 1.08', remuneracao: 3356.01, pontos: 0.96 },
+      { codigo: 'FCE 1.07', remuneracao: 2908.64, pontos: 0.83 },
+      { codigo: 'FCE 1.06', remuneracao: 2463.00, pontos: 0.70 },
+      { codigo: 'FCE 1.05', remuneracao: 2099.09, pontos: 0.60 },
+      { codigo: 'FCE 1.04', remuneracao: 1553.73, pontos: 0.44 },
+      { codigo: 'FCE 1.03', remuneracao: 1294.43, pontos: 0.37 },
+      { codigo: 'FCE 1.02', remuneracao: 723.98, pontos: 0.21 },
+      { codigo: 'FCE 1.01', remuneracao: 428.38, pontos: 0.12 },
+      { codigo: 'CCE 1.18', remuneracao: 31919.27, pontos: 9.12 },
+      { codigo: 'CCE 1.17', remuneracao: 27943.17, pontos: 7.99 },
+      { codigo: 'CCE 1.16', remuneracao: 23409.45, pontos: 6.69 },
+      { codigo: 'CCE 1.15', remuneracao: 20327.48, pontos: 5.81 },
+      { codigo: 'CCE 1.14', remuneracao: 17387.27, pontos: 4.97 },
+      { codigo: 'CCE 1.13', remuneracao: 14419.69, pontos: 4.12 },
+      { codigo: 'CCE 1.12', remuneracao: 10856.45, pontos: 3.10 },
+      { codigo: 'CCE 1.11', remuneracao: 8656.66, pontos: 2.47 },
+      { codigo: 'CCE 1.10', remuneracao: 7426.44, pontos: 2.12 },
+      { codigo: 'CCE 1.09', remuneracao: 5803.78, pontos: 1.66 },
+      { codigo: 'CCE 1.08', remuneracao: 5592.36, pontos: 1.60 },
+      { codigo: 'CCE 1.07', remuneracao: 4847.72, pontos: 1.39 },
+      { codigo: 'CCE 1.06', remuneracao: 4104.99, pontos: 1.17 },
+      { codigo: 'CCE 1.05', remuneracao: 3498.47, pontos: 1.00 },
+      { codigo: 'CCE 1.04', remuneracao: 1553.73, pontos: 0.44 },
+      { codigo: 'CCE 1.03', remuneracao: 1294.43, pontos: 0.37 },
+      { codigo: 'CCE 1.02', remuneracao: 723.98, pontos: 0.21 },
+      { codigo: 'CCE 1.01', remuneracao: 428.38, pontos: 0.12 }
+    ];
+
+    const byCode = Object.fromEntries(cargos.map(c => [c.codigo, c]));
+    const fmtMoney = value => value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    const fmtPoints = value => value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    const state = { extinct: [], create: [] };
+
+    function cargoOptions(selected) {
+      return cargos.map(c => `<option value="${c.codigo}" ${c.codigo === selected ? 'selected' : ''}>${c.codigo}</option>`).join('');
+    }
+
+    function addRow(type, codigo = cargos[0].codigo, qty = 0) {
+      state[type].push({ id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()), codigo, qty });
+      render();
+    }
+
+    function removeRow(type, id) {
+      state[type] = state[type].filter(r => r.id !== id);
+      render();
+    }
+
+    function updateRow(type, id, field, value) {
+      const row = state[type].find(r => r.id === id);
+      if (!row) return;
+      if (field === 'qty') {
+        const parsed = Math.max(0, Math.floor(Number(value || 0)));
+        row.qty = Number.isFinite(parsed) ? parsed : 0;
+      } else {
+        row[field] = value;
+      }
+      render();
+    }
+
+    function rowTotal(row) {
+      const cargo = byCode[row.codigo] || cargos[0];
+      return (Number(row.qty) || 0) * cargo.pontos;
+    }
+
+    function total(type) {
+      return state[type].reduce((sum, row) => sum + rowTotal(row), 0);
+    }
+
+    function renderTable(type, tableId) {
+      const tbody = document.querySelector(`#${tableId} tbody`);
+      tbody.innerHTML = state[type].map(row => {
+        const cargo = byCode[row.codigo] || cargos[0];
+        const totalPontos = rowTotal(row);
+        return `
+          <tr>
+            <td><select onchange="updateRow('${type}', '${row.id}', 'codigo', this.value)">${cargoOptions(row.codigo)}</select></td>
+            <td><input type="number" min="0" step="1" value="${row.qty}" onchange="updateRow('${type}', '${row.id}', 'qty', this.value)" oninput="updateRow('${type}', '${row.id}', 'qty', this.value)" /></td>
+            <td class="num">${fmtMoney(cargo.remuneracao)}</td>
+            <td class="num">${fmtPoints(cargo.pontos)}</td>
+            <td class="num"><strong>${fmtPoints(totalPontos)}</strong></td>
+            <td><button class="small danger" onclick="removeRow('${type}', '${row.id}')">Remover</button></td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function renderReference() {
+      const tbody = document.querySelector('#referenceTable tbody');
+      tbody.innerHTML = cargos.map(c => `
+        <tr>
+          <td>${c.codigo}</td>
+          <td class="num">${fmtMoney(c.remuneracao)}</td>
+          <td class="num">${fmtPoints(c.pontos)}</td>
+        </tr>
+      `).join('');
+    }
+
+    function renderSummary() {
+      const released = total('extinct');
+      const used = total('create');
+      const balance = released - used;
+      document.getElementById('releasedPoints').textContent = fmtPoints(released);
+      document.getElementById('usedPoints').textContent = fmtPoints(used);
+      document.getElementById('balancePoints').textContent = fmtPoints(balance);
+      const card = document.getElementById('balanceCard');
+      card.classList.remove('positive', 'zero', 'negative');
+      card.classList.add(balance > 0 ? 'positive' : balance < 0 ? 'negative' : 'zero');
+      document.getElementById('negativeAlert').style.display = balance < 0 ? 'block' : 'none';
+    }
+
+    function render() {
+      renderTable('extinct', 'extinctTable');
+      renderTable('create', 'createTable');
+      renderSummary();
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.style.display = 'block';
+      setTimeout(() => { toast.style.display = 'none'; }, 2200);
+    }
+
+    function buildResultText(separator = '\t') {
+      const lines = [];
+      lines.push('Tipo' + separator + 'Cargo/Função' + separator + 'Quantidade' + separator + 'Remuneração individual' + separator + 'CCE unitário' + separator + 'Total de pontos');
+      for (const type of ['extinct', 'create']) {
+        const label = type === 'extinct' ? 'Extinção' : 'Criação';
+        for (const row of state[type]) {
+          const cargo = byCode[row.codigo];
+          lines.push([
+            label,
+            row.codigo,
+            row.qty,
+            fmtMoney(cargo.remuneracao),
+            fmtPoints(cargo.pontos),
+            fmtPoints(rowTotal(row))
+          ].join(separator));
+        }
+      }
+      lines.push('');
+      lines.push('Total liberado' + separator + fmtPoints(total('extinct')));
+      lines.push('Total consumido' + separator + fmtPoints(total('create')));
+      lines.push('Saldo remanescente' + separator + fmtPoints(total('extinct') - total('create')));
+      return lines.join('\n');
+    }
+
+    async function copyResult() {
+      const text = buildResultText('\t');
+      try {
+        await navigator.clipboard.writeText(text);
+        showToast('Resultado copiado para a área de transferência.');
+      } catch (e) {
+        const tmp = document.createElement('textarea');
+        tmp.value = text;
+        document.body.appendChild(tmp);
+        tmp.select();
+        document.execCommand('copy');
+        document.body.removeChild(tmp);
+        showToast('Resultado copiado para a área de transferência.');
+      }
+    }
+
+    function exportCSV() {
+      const csv = buildResultText(';');
+      const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'simulacao_cce_fce.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('CSV exportado.');
+    }
+
+    function clearSimulation() {
+      if (!confirm('Limpar toda a simulação?')) return;
+      state.extinct = [];
+      state.create = [];
+      addRow('extinct');
+      addRow('create');
+      render();
+    }
+
+    document.getElementById('addExtinctBtn').addEventListener('click', () => addRow('extinct'));
+    document.getElementById('addCreateBtn').addEventListener('click', () => addRow('create'));
+    document.getElementById('copyBtn').addEventListener('click', copyResult);
+    document.getElementById('csvBtn').addEventListener('click', exportCSV);
+    document.getElementById('clearBtn').addEventListener('click', clearSimulation);
+
+    renderReference();
+    addRow('extinct', 'FCE 1.10', 0);
+    addRow('create', 'FCE 1.10', 0);
+  </script>
+</body>
+</html>

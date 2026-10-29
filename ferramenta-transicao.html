@@ -1,0 +1,1817 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Desenho Organizacional — Estrutura, Cargos e Histórico</title>
+<style>
+  :root{
+    --tinta:#16324a; --tinta-2:#24506f; --papel:#f7f5f0; --branco:#ffffff;
+    --carimbo:#8a2f2b; --ok:#3d6b41; --ok-bg:#edf3ed; --alerta:#9a6a12; --alerta-bg:#faf3e2;
+    --linha:#d8d3c8; --cinza:#5c6670; --foco:#24506f; --leitura:#faf9f5;
+    --nova:#1d4ed8; --nova-bg:#e7effa;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+       background:var(--papel); color:var(--tinta); font-size:15px; line-height:1.5;}
+
+  header{background:var(--tinta); color:var(--branco); padding:12px 22px;
+         display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;}
+  header h1{font-family:Georgia,"Times New Roman",serif; font-size:1.15rem; font-weight:600;}
+  header .cenario{display:flex; align-items:center; gap:8px; font-size:.8rem;}
+  header .cenario input{border:none; border-bottom:1px solid rgba(255,255,255,.45); background:transparent;
+    color:var(--branco); font-size:.85rem; font-family:inherit; padding:3px 2px; min-width:240px;}
+  header .cenario input:focus-visible{outline:none; border-bottom-color:#fff;}
+
+  .barra-acoes{background:var(--tinta-2); color:var(--branco); padding:9px 22px;
+    display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
+  .barra-acoes button, .barra-acoes label.btn{
+    background:var(--branco); color:var(--tinta); border:none; padding:6px 12px;
+    font-size:.82rem; font-weight:600; cursor:pointer; border-radius:2px;}
+  .barra-acoes button:hover, .barra-acoes label.btn:hover{background:#eae6dd;}
+  .barra-acoes button:focus-visible, .barra-acoes label.btn:focus-within{outline:2px solid #fff; outline-offset:2px;}
+  .barra-acoes .sep{width:1px; height:22px; background:rgba(255,255,255,.3);}
+  .barra-acoes .autosave{margin-left:auto; font-size:.75rem; opacity:.85;}
+  input[type=file]{display:none;}
+
+  /* ── Painel permanente: pontos + silhueta ── */
+  .painel-fixo{position:sticky; top:0; z-index:20; background:var(--branco);
+    border-bottom:1px solid var(--linha); padding:10px 22px; display:flex; gap:22px;
+    align-items:center; flex-wrap:wrap; box-shadow:0 1px 3px rgba(22,50,74,.07);}
+  .medidor{display:flex; gap:14px;}
+  .medidor .m{border:1px solid var(--linha); border-radius:3px; padding:5px 12px; min-width:118px;}
+  .medidor .m .rot{font-size:.66rem; text-transform:uppercase; letter-spacing:.07em; color:var(--cinza); font-weight:700;}
+  .medidor .m .val{font-size:1.25rem; font-weight:700; font-variant-numeric:tabular-nums;}
+  .medidor .m .ref{font-size:.69rem; color:var(--cinza); margin-top:1px; white-space:nowrap;}
+  .medidor .m .ref b{color:var(--tinta); font-weight:700; font-variant-numeric:tabular-nums;}
+  .m.total{min-width:186px; background:var(--leitura);}
+  .m.total .val{color:var(--tinta-2);}
+  .m.saldo.positivo{background:var(--ok-bg); border-color:#a9c6ab;} .m.saldo.positivo .val{color:var(--ok);}
+  .m.saldo.zerado{background:var(--alerta-bg); border-color:#e0c88a;} .m.saldo.zerado .val{color:var(--alerta);}
+  .m.saldo.negativo{background:#f9ecec; border-color:#dda9a7;} .m.saldo.negativo .val{color:var(--carimbo);}
+
+  .silhueta{display:flex; gap:14px; align-items:center; flex-wrap:wrap; font-size:.8rem;}
+  .silhueta .rotulo{font-size:.66rem; text-transform:uppercase; letter-spacing:.07em; color:var(--cinza); font-weight:700;}
+  .silhueta .s{color:var(--cinza); white-space:nowrap;}
+  .silhueta .s b{color:var(--tinta); font-variant-numeric:tabular-nums;}
+  .silhueta .s .delta{font-weight:700;}
+  .delta.mais{color:var(--nova);} .delta.menos{color:var(--carimbo);}
+
+  /* ── Abas ── */
+  .abas{background:var(--branco); border-bottom:1px solid var(--linha); padding:0 22px; display:flex; gap:2px; flex-wrap:wrap;}
+  .abas button{border:none; background:none; padding:11px 16px; font-size:.86rem; font-weight:600;
+    color:var(--cinza); cursor:pointer; border-bottom:3px solid transparent; font-family:inherit;}
+  .abas button:hover{color:var(--tinta); background:#f5f3ee;}
+  .abas button.ativa{color:var(--tinta); border-bottom-color:var(--tinta-2);}
+  .abas button:focus-visible{outline:2px solid var(--foco); outline-offset:-2px;}
+  .abas .conta{font-size:.72rem; color:var(--cinza); font-weight:400;}
+
+  main{padding:18px 22px 40px;}
+  .aba{display:none;} .aba.ativa{display:block;}
+
+  h2.secao{font-family:Georgia,serif; font-size:1rem; font-weight:600; margin-bottom:4px;}
+  p.explica{font-size:.83rem; color:var(--cinza); margin-bottom:14px; max-width:78ch;}
+
+  .painel{background:var(--branco); border:1px solid var(--linha); border-radius:3px; padding:14px 16px; margin-bottom:14px;}
+  .painel h3{font-size:.74rem; text-transform:uppercase; letter-spacing:.08em; color:var(--cinza);
+    border-bottom:1px solid var(--linha); padding-bottom:7px; margin-bottom:11px;}
+  .painel.leitura{background:var(--leitura);}
+
+  /* ── Árvore de estrutura ── */
+  #arvore{display:grid; gap:10px;}
+  .ferramentas-arvore{display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:12px;}
+  .ferramentas-arvore input{max-width:430px;}
+  details.macro, details.unidade-acordeao{background:var(--branco); border:1px solid var(--linha); border-radius:3px;}
+  details.macro>summary, details.unidade-acordeao>summary{cursor:pointer; list-style:none; display:flex; align-items:center; gap:8px;}
+  details.macro>summary::-webkit-details-marker, details.unidade-acordeao>summary::-webkit-details-marker{display:none;}
+  details.macro>summary{padding:11px 13px; background:#f3f1ec; font-weight:700;}
+  details.macro>summary::before, details.unidade-acordeao>summary::before{content:"›"; font-size:1.15rem; transition:transform .15s;}
+  details[open]>summary::before{transform:rotate(90deg);}
+  .macro-conteudo{padding:10px; display:grid; gap:8px;}
+  details.unidade-acordeao{margin-left:calc(var(--nivel, 0) * 18px);}
+  details.unidade-acordeao>summary{padding:8px 10px; min-height:42px;}
+  details.unidade-acordeao>summary:hover{background:#faf9f5;}
+  .resumo-unidade{display:flex; align-items:center; gap:8px; min-width:0; flex:1;}
+  .resumo-unidade .nome-resumo{font-weight:650; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .resumo-unidade .meta-resumo{color:var(--cinza); font-size:.76rem; white-space:nowrap;}
+  .editor-unidade{border-top:1px solid #eceae4; padding:10px;}
+  .campos-unidade{display:grid; grid-template-columns:minmax(260px,1fr) 100px 140px minmax(190px,1fr) 150px; gap:8px; align-items:end;}
+  .mini-rotulo{display:block; font-size:.65rem; text-transform:uppercase; letter-spacing:.05em; color:var(--cinza); font-weight:700; margin-bottom:3px;}
+  .posicoes{margin-top:10px; border-top:1px dashed var(--linha); padding-top:9px;}
+  .posicao{display:grid; grid-template-columns:minmax(170px,1fr) 150px 76px auto; gap:8px; margin-top:6px; align-items:end;}
+  .filhos-unidade{display:grid; gap:7px; margin-top:8px;}
+  .acoes-unidade{display:flex; gap:5px; flex-wrap:wrap; margin-top:10px;}
+  .acoes-unidade button, .posicao button{border:1px solid var(--linha); background:var(--branco); color:var(--tinta); padding:5px 8px; font-size:.72rem; cursor:pointer; border-radius:2px; font-family:inherit;}
+  .acoes-unidade button.perigo, .posicao button.perigo{color:var(--carimbo);}
+  .unidade-acordeao.extinta{opacity:.55;}
+  @media(max-width:1050px){
+    .campos-unidade{grid-template-columns:1fr 110px;}
+    .posicao{grid-template-columns:1fr 140px 70px auto;}
+    details.unidade-acordeao{margin-left:calc(var(--nivel, 0) * 10px);}
+  }
+  .un{display:grid; grid-template-columns:34px minmax(210px,1fr) 106px 152px 126px 122px auto; gap:8px;
+      align-items:center; padding:7px 8px; border-bottom:1px solid #eceae4; min-width:1080px;}
+  .un:hover{background:#faf9f5;}
+  .un.extinta{opacity:.5;}
+  .un.extinta .nome-un input{text-decoration:line-through;}
+  .un .tipo{font-size:.6rem; font-weight:700; letter-spacing:.04em; padding:2px 5px; border-radius:2px;
+    color:var(--branco); text-align:center;}
+  .tipo.DIR{background:var(--tinta);} .tipo.CG{background:#3c5f80;}
+  .tipo.CO{background:#5c7d9a;} .tipo.DIV{background:#8296a8;} .tipo.SV{background:#a5b2be;}
+  .tipo.SPU{background:#10283b;} .tipo.GAB{background:#6b4f3b;} .tipo.SUP{background:#315f52;}
+  .tipo.SEC{background:#987f68;} .tipo.SET{background:#aa9785;} .tipo.OUT{background:#68747e;}
+  .un .nome-un{display:flex; gap:6px; align-items:center; min-width:0;}
+  .un .nome-un input.nm{flex:1; min-width:0;}
+  .un .nome-un input.sg{width:74px; flex:none; text-transform:uppercase;}
+  .un .acoes{display:flex; gap:4px; justify-content:flex-end;}
+  .un .acoes button{border:1px solid var(--linha); background:var(--branco); color:var(--tinta);
+    padding:4px 7px; font-size:.72rem; cursor:pointer; border-radius:2px; font-family:inherit; white-space:nowrap;}
+  .un .acoes button:hover{background:#f0ede6;}
+  .un .acoes button.perigo{color:var(--carimbo);} .un .acoes button.perigo:hover{background:#f6e9e8;}
+  .n1{padding-left:26px;} .n2{padding-left:52px;} .n3{padding-left:78px;} .n4{padding-left:104px;}
+
+  .chips{display:flex; gap:4px; flex-wrap:wrap;}
+  .chip{font-size:.63rem; font-weight:700; letter-spacing:.03em; text-transform:uppercase;
+    padding:2px 6px; border-radius:2px; white-space:nowrap;}
+  .chip.nova{background:var(--nova-bg); color:var(--nova);}
+  .chip.ren{background:#f1ecf7; color:#5b3a86;}
+  .chip.cargo{background:var(--alerta-bg); color:var(--alerta);}
+  .chip.mov{background:#eaf2f0; color:#2a6157;}
+  .chip.ext{background:#f9ecec; color:var(--carimbo);}
+  .chip.conf{background:#f2f0ea; color:var(--cinza);}
+
+  input[type=text], input[type=number], textarea, select{
+    border:1px solid var(--linha); border-radius:2px; padding:6px 8px; font-size:.85rem;
+    font-family:inherit; background:var(--branco); color:var(--tinta); width:100%;}
+  input:focus-visible, textarea:focus-visible, select:focus-visible{outline:2px solid var(--foco); outline-offset:1px;}
+  textarea{resize:vertical; min-height:52px;}
+  select.a-conferir{background:#fdf9ee; border-color:#e0c88a;}
+  input[type=number]{max-width:80px;}
+
+  table{width:100%; border-collapse:collapse; font-size:.83rem;}
+  thead th{background:#f3f1ec; color:var(--cinza); font-weight:700; text-align:left;
+    padding:7px 8px; border-bottom:1px solid var(--linha); white-space:nowrap;
+    font-size:.72rem; text-transform:uppercase; letter-spacing:.05em;}
+  tbody td{border-bottom:1px solid #eceae4; padding:6px 8px; vertical-align:middle;}
+  tbody tr.total td{background:#f7f5f0; font-weight:700;}
+  .num{text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums;}
+  .tab-rolagem{max-height:420px; overflow:auto; border:1px solid var(--linha); border-radius:3px;}
+  .vazio{font-size:.83rem; color:var(--cinza); padding:14px 8px; font-style:italic;}
+
+  .aviso{font-size:.8rem; padding:8px 12px; border-radius:2px; margin-top:8px;}
+  .aviso.alerta{background:var(--alerta-bg); border-left:3px solid var(--alerta); color:#6b4a0c;}
+  .aviso.ok{background:var(--ok-bg); border-left:3px solid var(--ok); color:var(--ok);}
+  .aviso.trava{background:#f9ecec; border-left:3px solid var(--carimbo); color:#6d2522;}
+  .aviso.info{background:var(--nova-bg); border-left:3px solid var(--tinta-2); color:var(--tinta);}
+
+  button.add{border:1px dashed var(--tinta-2); background:none; color:var(--tinta-2);
+    padding:6px 13px; font-size:.82rem; font-weight:600; cursor:pointer; border-radius:2px; font-family:inherit;}
+  button.add:hover{background:var(--nova-bg);} button.add:disabled{border-color:var(--linha); color:var(--cinza); cursor:not-allowed;}
+
+  .interruptor{display:flex; align-items:center; gap:8px; font-size:.83rem; margin-bottom:12px;}
+  .interruptor input{width:auto;}
+
+  /* ── Regimento ── */
+  .reg{display:grid; grid-template-columns:330px 1fr; gap:16px; align-items:start;}
+  @media(max-width:1060px){ .reg{grid-template-columns:1fr;} }
+  .reg nav{background:var(--branco); border:1px solid var(--linha); border-radius:3px; padding:10px 0; max-height:74vh; overflow-y:auto;}
+  .no{display:flex; align-items:flex-start; gap:7px; width:100%; text-align:left; border:none;
+    background:none; padding:6px 14px; cursor:pointer; font-size:.81rem; color:var(--tinta); line-height:1.3; font-family:inherit;}
+  .no:hover{background:#f0ede6;}
+  .no.ativo{background:var(--nova-bg); border-left:3px solid var(--tinta-2); padding-left:11px;}
+  .no .tipo{flex:none; min-width:30px; margin-top:2px;}
+  .no .nome{flex:1;} .no .st{flex:none; font-size:.72rem; margin-top:2px;}
+  .st.vazio{color:var(--cinza);} .st.ok{color:var(--ok); font-weight:700;} .st.travado{color:var(--carimbo);}
+  .colunas{display:grid; grid-template-columns:1fr 1fr; gap:14px; align-items:start;}
+  @media(max-width:1400px){ .colunas{grid-template-columns:1fr;} }
+  .texto-atual{font-size:.86rem; white-space:pre-wrap; line-height:1.6;}
+  .texto-atual .caput{font-weight:600;}
+  label.campo{display:block; font-size:.74rem; text-transform:uppercase; letter-spacing:.06em;
+    color:var(--cinza); margin:13px 0 4px;}
+  label.campo:first-of-type{margin-top:0;}
+  .dica{font-size:.76rem; color:var(--cinza); margin-top:3px;}
+  .inciso{display:flex; gap:7px; margin-top:8px; align-items:flex-start;}
+  .inciso .num-i{flex:none; width:32px; padding-top:7px; font-size:.79rem; font-weight:700; color:var(--tinta-2);}
+  .inciso button.rm{flex:none; border:1px solid var(--linha); background:var(--branco); color:var(--carimbo);
+    width:29px; height:33px; cursor:pointer; border-radius:2px; font-weight:700; font-family:inherit;}
+  .inciso button.rm:hover{background:#f6e9e8;}
+  .verbos{font-size:.77rem; color:var(--cinza); background:#f2f0ea; padding:8px 12px; border-radius:2px; margin-top:13px;}
+  .verbos b{color:var(--tinta);}
+  .progresso{display:flex; align-items:center; gap:10px; margin-bottom:12px; font-size:.82rem;}
+  .progresso .trilha{flex:1; max-width:320px; height:9px; background:#e6e3db; border-radius:5px; overflow:hidden;}
+  .progresso .barra{height:100%; background:#9fd3a4; width:0%;}
+
+  .cab-unidade{background:var(--branco); border:1px solid var(--linha); border-radius:3px; padding:12px 16px; margin-bottom:12px;}
+  .cab-unidade h2{font-family:Georgia,serif; font-size:1rem; font-weight:600;}
+  .cab-unidade .meta{font-size:.78rem; color:var(--cinza); margin-top:3px;}
+
+  /* ── Comparativo ── */
+  .cmp-antes{color:var(--cinza);} .cmp-depois{font-weight:600;}
+  .cmp-linha.mudou{background:#fdfcf7;}
+  .resumo-cmp{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px;}
+  .resumo-cmp .r{border:1px solid var(--linha); background:var(--branco); border-radius:3px; padding:7px 13px;}
+  .resumo-cmp .r.filtro{cursor:pointer; text-align:left; font-family:inherit; color:inherit;}
+  .resumo-cmp .r.filtro:hover{border-color:var(--azul);}
+  .resumo-cmp .r.filtro.ativo{border-color:var(--azul); box-shadow:0 0 0 2px rgba(18,91,138,.12); background:#eef7fc;}
+  .resumo-cmp .r .rot{font-size:.66rem; text-transform:uppercase; letter-spacing:.06em; color:var(--cinza); font-weight:700;}
+  .resumo-cmp .r .val{font-size:1.1rem; font-weight:700;}
+
+  footer{padding:14px 22px 26px; font-size:.75rem; color:var(--cinza); border-top:1px solid var(--linha); max-width:100ch;}
+  .aviso-flutuante{position:fixed; right:18px; bottom:18px; background:var(--tinta); color:#fff;
+    padding:10px 14px; border-radius:3px; font-size:.83rem; display:none; z-index:60; box-shadow:0 2px 8px rgba(0,0,0,.2);}
+
+  /* ── Navegação privada e módulos ── */
+  .oculta{display:none !important;}
+  .cab-inicio{background:var(--tinta); color:#fff; padding:28px 30px;}
+  .cab-inicio h1{font:600 1.7rem Georgia,"Times New Roman",serif;}
+  .cab-inicio p{margin-top:5px; max-width:72ch; color:#dbe7ef;}
+  .inicio{max-width:1180px; margin:0 auto; padding:28px 24px 48px;}
+  .inicio h2{font:600 1.08rem Georgia,"Times New Roman",serif; margin-bottom:12px;}
+  .atalhos{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; margin-bottom:28px;}
+  .atalho{border:1px solid var(--linha); background:#fff; color:var(--tinta); border-radius:5px; padding:18px;
+    text-align:left; cursor:pointer; min-height:150px; font-family:inherit; box-shadow:0 1px 2px rgba(22,50,74,.05);}
+  .atalho:hover{border-color:var(--tinta-2); transform:translateY(-1px);}
+  .atalho .icone{display:block; font-size:1.4rem; margin-bottom:10px;}
+  .atalho strong{display:block; font:600 1.04rem Georgia,"Times New Roman",serif; margin-bottom:5px;}
+  .atalho span{display:block; color:var(--cinza); font-size:.82rem; line-height:1.45;}
+  .projetos-lista{background:#fff; border:1px solid var(--linha); border-radius:5px; overflow:hidden;}
+  .projeto-item{display:grid; grid-template-columns:minmax(260px,1.6fr) 130px 140px 150px auto; gap:12px;
+    align-items:center; padding:13px 15px; border-bottom:1px solid #eceae4;}
+  .projeto-item:last-child{border-bottom:none;}
+  .projeto-item .nome{font-weight:700;}
+  .projeto-item .meta{font-size:.75rem; color:var(--cinza);}
+  .rotulo-miudo{display:block; font-size:.63rem; text-transform:uppercase; letter-spacing:.06em; color:var(--cinza); font-weight:700;}
+  .botao-primario{border:1px solid var(--tinta-2); background:var(--tinta-2); color:#fff; padding:7px 11px; border-radius:3px;
+    cursor:pointer; font-family:inherit; font-size:.8rem; font-weight:650;}
+  .botao-secundario{border:1px solid var(--linha); background:#fff; color:var(--tinta); padding:7px 11px; border-radius:3px;
+    cursor:pointer; font-family:inherit; font-size:.8rem; font-weight:650;}
+  .modulo-cab{background:var(--tinta); color:#fff; padding:12px 18px; display:flex; align-items:center; gap:12px;}
+  .modulo-cab h1{font:600 1.1rem Georgia,"Times New Roman",serif;}
+  .modulo-frame{width:100%; height:calc(100vh - 54px); border:0; background:#fff;}
+  .projeto-meta{background:#eef3f6; border-bottom:1px solid #cfdbe3; padding:8px 22px; display:flex; gap:12px; align-items:end; flex-wrap:wrap;}
+  .projeto-meta label{min-width:140px; font-size:.7rem; color:var(--cinza); font-weight:700; text-transform:uppercase; letter-spacing:.05em;}
+  .projeto-meta input,.projeto-meta select{margin-top:3px; padding:5px 7px; font-size:.8rem; text-transform:none; letter-spacing:normal; font-weight:400;}
+  .projeto-meta .identificacao{margin-right:auto; align-self:center;}
+  .projeto-meta .identificacao strong{display:block; color:var(--tinta); font-size:.86rem; text-transform:none; letter-spacing:normal;}
+  .projeto-meta .identificacao span{font-size:.72rem; color:var(--cinza); text-transform:none; letter-spacing:normal; font-weight:400;}
+  .projeto-meta .subtitulo{min-width:260px; flex:1;}
+  .projeto-meta .meta-pontos{min-width:125px;}
+  .projeto-meta .meta-valor{min-width:90px; max-width:110px;}
+  .nota-form{display:grid; gap:8px;}
+  .nota-form textarea{width:100%; resize:vertical; min-height:86px;}
+  .notas-lista{display:grid; gap:8px; margin-top:12px;}
+  .nota-item{border-left:3px solid #9bb4c5; background:#f7f9fa; padding:8px 10px;}
+  .nota-item p{white-space:pre-wrap; margin:0 0 5px;}
+  .nota-item small{color:var(--cinza);}
+  .nota-item .linha-nota{display:flex; align-items:center; justify-content:space-between; gap:8px;}
+  .ponte-modulos{background:#eef7fc; border:1px solid #bad5e5; padding:9px 12px; margin:10px 22px 0; font-size:.8rem;}
+  .meta-ok{background:#e8f3eb!important; border-color:#a7ccb0!important;}
+  .meta-atencao{background:#fff3d4!important; border-color:#e5c978!important;}
+  .backup-prototipo{position:relative;}
+  .backup-prototipo>summary{list-style:none; cursor:pointer; border:1px solid #91a8b7; background:#f8fafb; color:var(--tinta); padding:6px 10px; font-weight:700; font-size:.78rem;}
+  .backup-prototipo>summary::-webkit-details-marker{display:none;}
+  .backup-prototipo>div{position:absolute; z-index:35; top:calc(100% + 4px); left:0; min-width:230px; background:#fff; border:1px solid var(--linha); box-shadow:0 8px 22px rgba(0,0,0,.14); padding:9px; display:grid; gap:7px;}
+  .comparacao-publica-grid{display:grid; grid-template-columns:1fr 1fr; gap:16px; align-items:start;}
+  .quadro-publico{border:1px solid var(--linha); background:#fff; overflow:hidden;}
+  .quadro-publico h3{margin:0; padding:12px 14px; background:#e9eff3; border-bottom:1px solid var(--linha);}
+  .quadro-publico .rolagem{max-height:620px; overflow:auto;}
+  .tabela-estrutura-publica{width:100%; border-collapse:collapse; font-size:.76rem;}
+  .tabela-estrutura-publica th{position:sticky; top:0; z-index:2; background:#f5f7f8; padding:8px; text-align:left; border-bottom:1px solid var(--linha);}
+  .tabela-estrutura-publica td{padding:7px 8px; border-bottom:1px solid #e2e7ea; vertical-align:top;}
+  .tabela-estrutura-publica tr.status-extinta td{background:#fde8e7; color:#7b211c;}
+  .tabela-estrutura-publica tr.status-alterada td{background:#fff3c9; color:#6b5400;}
+  .tabela-estrutura-publica tr.status-criada td{background:#e4f3e7; color:#245e31;}
+  .tabela-estrutura-publica .unidade-nivel{display:block; color:#6d7b84; font-size:.67rem; margin-top:2px;}
+  .legenda-comparacao{display:flex; gap:16px; flex-wrap:wrap; margin:0 0 12px; font-size:.75rem;}
+  .legenda-comparacao span{display:flex; align-items:center; gap:6px;}
+  .legenda-comparacao i{width:14px; height:14px; border:1px solid rgba(0,0,0,.1); display:inline-block;}
+  .legenda-comparacao .l-extinta{background:#fde8e7;}.legenda-comparacao .l-alterada{background:#fff3c9;}.legenda-comparacao .l-criada{background:#e4f3e7;}
+  .grupo-notas-unidade{border:1px solid var(--linha); background:#fff; margin-bottom:10px;}
+  .grupo-notas-unidade>div:first-child{display:flex; justify-content:space-between; align-items:center; gap:10px; padding:9px 11px; background:#f1f5f7; border-bottom:1px solid var(--linha);}
+  .grupo-notas-unidade .conteudo-notas{padding:4px 10px 10px;}
+
+  /* ── Estrutura com navegação e editor lateral ── */
+  .estrutura-layout{display:grid; grid-template-columns:minmax(390px,1fr) minmax(480px,1.15fr); gap:14px; align-items:start;}
+  .estrutura-arvore{min-width:0; max-height:calc(100vh - 250px); overflow:auto; padding-right:3px;}
+  .estrutura-editor{position:sticky; top:116px; min-width:0;}
+  details.unidade-acordeao.selecionada{border-color:var(--tinta-2); box-shadow:0 0 0 1px var(--tinta-2);}
+  .editor-unidade{border-top:none;}
+  .campos-unidade{grid-template-columns:minmax(230px,1fr) 100px 145px minmax(180px,1fr);}
+  @media(max-width:1120px){
+    .estrutura-layout{grid-template-columns:1fr;}
+    .estrutura-arvore{max-height:none;}
+    .estrutura-editor{position:static;}
+    .atalhos{grid-template-columns:1fr;}
+    .projeto-item{grid-template-columns:1fr 1fr;}
+  }
+
+  /* ── Reuniões ── */
+  .reuniao-grid{display:grid; grid-template-columns:minmax(280px,.75fr) minmax(430px,1.25fr); gap:14px; align-items:start;}
+  .linha-tempo{display:grid; gap:9px;}
+  .evento{border-left:3px solid var(--linha); background:#fff; padding:10px 12px; border-radius:2px;}
+  .evento.proposta{border-left-color:var(--nova);}.evento.decisao{border-left-color:var(--ok);}
+  .evento.pendencia{border-left-color:var(--alerta);}.evento.encaminhamento{border-left-color:var(--tinta-2);}
+  .evento .evento-meta{font-size:.7rem; color:var(--cinza); margin-bottom:4px;}
+  .painel-reuniao{position:fixed; top:0; right:0; width:min(430px,94vw); height:100vh; z-index:90; background:var(--papel);
+    border-left:1px solid var(--linha); box-shadow:-4px 0 16px rgba(0,0,0,.18); padding:16px; overflow:auto;}
+  .painel-reuniao .cab-painel{display:flex; justify-content:space-between; gap:8px; align-items:center; margin-bottom:12px;}
+  .painel-reuniao h2{font:600 1.05rem Georgia,"Times New Roman",serif;}
+  .reuniao-flutuante{position:fixed; right:18px; bottom:18px; z-index:50; border:none; border-radius:24px; background:var(--tinta-2);
+    color:#fff; padding:10px 15px; cursor:pointer; font:650 .8rem system-ui; box-shadow:0 2px 8px rgba(0,0,0,.2);}
+
+  /* ── Prévia pública ── */
+  .consulta{max-width:1180px; margin:0 auto; padding:24px;}
+  .aviso-prototipo{background:#fff3d4; border:1px solid #e5c978; padding:8px 11px; margin-bottom:14px; font-size:.78rem;}
+  .consulta-topo{display:flex; justify-content:space-between; align-items:start; gap:18px;}
+  .consulta-topo h2{font:600 1.45rem Georgia,"Times New Roman",serif; margin:3px 0 5px;}
+  .resumo-publico{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin:16px 0 22px;}
+  .resumo-publico>div,.resumo-publico>button{background:#fff; border:1px solid var(--linha); border-radius:4px; padding:11px 12px; text-align:left; color:inherit; font-family:inherit;}
+  .resumo-publico>button{cursor:pointer;}
+  .resumo-publico>button:hover{border-color:var(--azul);}
+  .resumo-publico>button.ativo{border-color:var(--azul); box-shadow:0 0 0 2px rgba(18,91,138,.12); background:#eef7fc;}
+  .resumo-publico b{display:block; font-size:1.2rem;}
+  .resumo-publico span{display:block; color:var(--cinza); font-size:.72rem; margin-top:2px;}
+  .resumo-cargos-publico{display:flex; gap:10px; flex-wrap:wrap; margin:10px 0 14px;}
+  .resumo-cargos-publico>div{border:1px solid var(--linha); background:#fff; border-radius:3px; padding:8px 13px; min-width:140px;}
+  .resumo-cargos-publico b{display:block; font-size:1.05rem;}
+  .resumo-cargos-publico span{font-size:.7rem; color:var(--cinza);}
+  .variacao-positiva{color:var(--ok); background:#e4f3e7 !important;}
+  .variacao-negativa{color:var(--carimbo); background:#fde8e7 !important;}
+  .tabela-cargos-publica tr.variacao-positiva td{background:#e4f3e7; color:#245f32; font-weight:600;}
+  .tabela-cargos-publica tr.variacao-negativa td{background:#fde8e7; color:#7b211c; font-weight:600;}
+  .bloco-consulta{margin:22px 0;}
+  .bloco-consulta>h3{font:600 1.05rem Georgia,"Times New Roman",serif; margin-bottom:10px;}
+  .consulta-resumo{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin:16px 0;}
+  .consulta-card{background:#fff; border:1px solid var(--linha); border-radius:4px; padding:12px;}
+  .consulta-card .valor{font-size:1.25rem; font-weight:750; margin-top:3px;}
+  .arvore-publica details{background:#fff; border:1px solid var(--linha); border-radius:3px; margin:7px 0;}
+  .arvore-publica summary{cursor:pointer; padding:9px 11px; font-weight:650;}
+  .arvore-publica .publica-filhos{padding:0 10px 8px 18px;}
+  .arvore-publica .publica-meta{font-size:.76rem; color:var(--cinza); padding:0 11px 8px;}
+  @media(max-width:900px){.comparacao-publica-grid{grid-template-columns:1fr;}}
+  @media(max-width:760px){.consulta-resumo,.resumo-publico{grid-template-columns:1fr 1fr;}.reuniao-grid{grid-template-columns:1fr;}.projeto-meta .subtitulo{min-width:100%;}.consulta-topo{display:block;}.consulta-topo button{margin-top:10px;}}
+
+  dialog{border:1px solid var(--linha); border-radius:5px; padding:0; max-width:520px; width:calc(100% - 30px); color:var(--tinta);}
+  dialog::backdrop{background:rgba(16,40,59,.42);}
+  .dialogo-corpo{padding:18px;}.dialogo-acoes{display:flex; justify-content:flex-end; gap:8px; padding:12px 18px; background:#f3f1ec;}
+</style>
+</head>
+<body>
+
+<section id="telaInicio">
+  <div class="cab-inicio">
+    <h1>Desenho Organizacional</h1>
+    <p>Área privada para elaborar propostas de estrutura, fazer cálculos rápidos de cargos e trabalhar minutas de regimento interno.</p>
+  </div>
+  <main class="inicio">
+    <h2>Ferramentas</h2>
+    <div class="atalhos">
+      <button class="atalho" type="button" id="atalhoEstrutura">
+        <span class="icone">▦</span><strong>Desenho Organizacional</strong>
+        <span>Propostas, estrutura, cargos, pontos, comparação, notas e histórico.</span>
+      </button>
+      <button class="atalho" type="button" id="atalhoSimulador">
+        <span class="icone">∑</span><strong>Simulador rápido</strong>
+        <span>Cálculo avulso de extinção e criação de cargos, sem alterar um projeto.</span>
+      </button>
+      <button class="atalho" type="button" id="atalhoRegimento">
+        <span class="icone">§</span><strong>Regimento Interno</strong>
+        <span>Módulo separado para estrutura regimental, competências e colaboração por área.</span>
+      </button>
+    </div>
+
+    <h2>Projetos recentes</h2>
+    <div class="projetos-lista">
+      <div class="projeto-item">
+        <div><div class="nome" id="inicioProjetoNome">Alteração organizacional</div><div class="meta">Estrutura de referência congelada · SPU</div></div>
+        <div><span class="rotulo-miudo">Estado</span><span id="inicioProjetoEstado">Em elaboração</span></div>
+        <div><span class="rotulo-miudo">Prazo</span><span id="inicioProjetoPrazo">Não informado</span></div>
+        <div><span class="rotulo-miudo">Cenário principal</span><span id="inicioProjetoCenario">Cenário A</span></div>
+        <button class="botao-primario" type="button" id="abrirProjeto">Abrir projeto</button>
+      </div>
+    </div>
+  </main>
+</section>
+
+<section id="telaSimulador" class="oculta">
+  <div class="modulo-cab"><button class="botao-secundario" type="button" data-voltar-inicio>← Início</button><h1>Simulador rápido de cargos e pontos</h1></div>
+  <iframe class="modulo-frame" src="simulador-de-cargos-original.html" title="Simulador rápido de cargos e pontos"></iframe>
+</section>
+
+<section id="telaRegimento" class="oculta">
+  <div class="modulo-cab"><button class="botao-secundario" type="button" data-voltar-inicio>← Início</button><h1>Regimento Interno — referência funcional</h1><button class="botao-secundario" type="button" id="btDesenhoDoRegimento" onclick="abrirVinculoModulos('regimento-desenho')">Criar desenho a partir deste regimento</button></div>
+  <div class="ponte-modulos oculta" id="vinculoRegimento"></div>
+  <iframe class="modulo-frame" src="modulo_DECIP_regimento_interno_3.html" title="Módulo de Regimento Interno da DECIP"></iframe>
+</section>
+
+<section id="telaConsulta" class="oculta">
+  <div class="modulo-cab"><button class="botao-secundario" type="button" id="voltarProjetoConsulta">← Projeto</button><h1>Prévia da consulta pública</h1></div>
+  <div class="consulta" id="consultaConteudo"></div>
+</section>
+
+<section id="telaProjeto" class="oculta">
+<header>
+  <div><h1>Desenho Organizacional</h1><div style="font-size:.72rem;opacity:.8;">Projeto de alteração da estrutura</div></div>
+  <div class="cenario">
+    <label for="nomeCenario">Cenário:</label>
+    <input type="text" id="nomeCenario" placeholder="nome do cenário">
+  </div>
+</header>
+
+<div class="projeto-meta">
+  <div class="identificacao"><strong id="tituloProjeto">Proposta de Desenho Organizacional</strong><span id="vinculoProjeto">Estrutura de referência congelada na abertura</span></div>
+  <label class="subtitulo">Subtítulo<input type="text" id="subtituloProjeto" placeholder="Uma frase opcional para identificar a proposta"></label>
+  <label>Prazo<input type="date" id="prazoProjeto"></label>
+  <label>Processo SEI<input type="text" id="seiProjeto" placeholder="opcional"></label>
+  <label>Estado<select id="estadoProjeto"><option>Em elaboração</option><option>Concluída</option></select></label>
+  <label class="meta-pontos">Meta<select id="metaTipo"><option value="livre">Sem meta</option><option value="manter">Manter o total</option><option value="reduzir">Reduzir pontos</option><option value="aumentar">Aumento autorizado</option></select></label>
+  <label class="meta-valor" id="campoMetaPontos">Pontos<input type="number" id="metaPontos" min="0" step="0.01" value="0"></label>
+</div>
+
+<div class="barra-acoes">
+  <button id="btInicio" type="button">← Início</button>
+  <span class="sep"></span>
+  <button id="btCsv" type="button">Demonstrativo de pontos (.csv)</button>
+  <button id="btTxtCmp" type="button">Quadro comparativo (.txt)</button>
+  <span class="sep"></span>
+  <button id="btPrevia" type="button">Pré-visualizar consulta</button>
+  <button id="btRegimentoDoDesenho" type="button" onclick="abrirVinculoModulos('desenho-regimento')">Criar regimento deste desenho</button>
+  <button id="btZerar" type="button">Recomeçar</button>
+  <details class="backup-prototipo"><summary>Backup do protótipo</summary><div><button id="btSalvar" type="button">Baixar backup (.json)</button><label class="btn" tabindex="0">Restaurar backup<input type="file" id="inAbrir" accept=".json"></label><small>Este recurso é temporário e será retirado quando houver gravação no sistema publicado.</small></div></details>
+  <span class="autosave" id="autosave">—</span>
+</div>
+
+<div class="painel-fixo">
+  <div class="medidor">
+    <div class="m total" id="mTotalBox">
+      <div class="rot">Total da estrutura</div>
+      <div class="val" id="mTotal">0,00</div>
+      <div class="ref" id="mTotalRef"></div>
+    </div>
+    <div class="m"><div class="rot">Pontos liberados</div><div class="val" id="mLib">0,00</div></div>
+    <div class="m"><div class="rot">Pontos consumidos</div><div class="val" id="mCon">0,00</div></div>
+    <div class="m saldo zerado" id="mSaldoBox"><div class="rot">Saldo</div><div class="val" id="mSaldo">0,00</div></div>
+    <div class="m" id="mMetaBox"><div class="rot">Meta</div><div class="val" id="mMeta">Sem meta</div><div class="ref" id="mMetaRef"></div></div>
+  </div>
+  <div class="silhueta">
+    <span class="rotulo">Silhueta&nbsp;atual&nbsp;→&nbsp;proposta</span>
+    <span id="silhuetaItens" style="display:contents"></span>
+  </div>
+</div>
+
+<div class="abas" role="tablist">
+  <button type="button" data-aba="estrutura" class="ativa" role="tab">1. Estrutura</button>
+  <button type="button" data-aba="pontos" role="tab">2. Cargos e pontos</button>
+  <button type="button" data-aba="comparativo" role="tab">3. Quadro comparativo</button>
+  <button type="button" data-aba="notas" role="tab">4. Notas e histórico</button>
+</div>
+
+<main>
+  <div class="aba ativa" id="aba-estrutura">
+    <h2 class="secao">Estrutura proposta</h2>
+    <div class="painel">
+      <h3>Árvore da proposta</h3>
+      <div class="ferramentas-arvore">
+        <input type="text" id="buscaEstrutura" placeholder="Buscar por nome ou sigla da unidade">
+        <button class="add" type="button" id="btLimparBusca">Limpar busca</button>
+        <button class="add" type="button" id="btAbrirTodos">Abrir tudo</button>
+        <button class="add" type="button" id="btFecharTodos">Recolher tudo</button>
+      </div>
+      <div class="estrutura-layout">
+        <div class="estrutura-arvore"><div id="arvore"></div></div>
+        <div class="estrutura-editor" id="editorEstrutura"><div class="painel leitura"><p class="vazio">Selecione uma unidade na árvore para comparar e editar.</p></div></div>
+      </div>
+      <p style="margin-top:12px;"><button class="add" type="button" id="btNovaRaiz">+ Nova unidade diretamente subordinada à SPU</button></p>
+    </div>
+  </div>
+
+  <div class="aba" id="aba-pontos">
+    <h2 class="secao">Cargos e pontos</h2>
+    <div class="painel">
+      <h3>Demonstrativo gerado pela estrutura</h3>
+      <div class="tab-rolagem"><table id="tabDerivado"><thead><tr>
+        <th>Origem</th><th>Movimento</th><th>Cargo</th><th class="num">Pontos liberados</th><th class="num">Pontos consumidos</th>
+      </tr></thead><tbody></tbody></table></div>
+    </div>
+    <div class="painel leitura">
+      <h3>Tabela de referência — CCE e FCE</h3>
+      <div class="tab-rolagem"><table id="tabRef"><thead><tr>
+        <th>Cargo/Função</th><th class="num">Remuneração</th><th class="num">CCE unitário</th>
+      </tr></thead><tbody></tbody></table></div>
+      <div class="aviso alerta">Valores embutidos na ferramenta. Antes de usar a simulação como peça de processo,
+        confirme a vigência da tabela no ato normativo que a fixou.</div>
+    </div>
+  </div>
+
+  <div class="aba" id="aba-comparativo">
+    <h2 class="secao">Quadro comparativo — situação atual × proposta</h2>
+    <div class="resumo-cmp" id="resumoCmp"></div>
+    <div class="painel">
+      <h3>Unidade a unidade</h3>
+      <div class="tab-rolagem" style="max-height:none;"><table id="tabCmp"><thead><tr>
+        <th>Situação</th><th>Denominação atual</th><th>Cargo atual</th><th>Denominação proposta</th><th>Cargo proposto</th><th>Subordinação proposta</th>
+      </tr></thead><tbody></tbody></table></div>
+    </div>
+  </div>
+
+  <div class="aba" id="aba-notas">
+    <h2 class="secao">Notas e histórico</h2>
+    <div class="reuniao-grid">
+      <div class="painel">
+        <h3>Nota geral da proposta</h3>
+        <div class="nota-form"><textarea id="textoNotaGeral" placeholder="Registre uma observação geral..."></textarea><button class="botao-primario" type="button" id="btAdicionarNotaGeral">Adicionar nota</button></div>
+        <div class="notas-lista" id="notasGerais"></div>
+      </div>
+      <div class="painel">
+        <h3>Histórico automático</h3>
+        <div class="linha-tempo" id="historicoProjeto"></div>
+      </div>
+    </div>
+    <div class="painel">
+      <h3>Notas por unidade</h3>
+      <p class="explica" id="resumoNotasUnidades"></p>
+      <div id="notasPorUnidade"></div>
+    </div>
+  </div>
+</main>
+
+<footer>Protótipo local. As alterações são guardadas neste navegador e podem ser exportadas em JSON.</footer>
+</section>
+
+<dialog id="dlgNovaUnidade">
+  <form method="dialog" id="formNovaUnidade">
+    <div class="dialogo-corpo">
+      <h2 style="font:600 1.05rem Georgia,serif;margin-bottom:8px;">Criar unidade a partir do cargo</h2>
+      <p class="explica">Escolha primeiro o cargo ou função que dará origem à unidade. A natureza sugerida poderá ser ajustada.</p>
+      <label class="campo" for="novaCargo">Cargo ou função</label><select id="novaCargo"></select>
+      <label class="campo" for="novaTipo">Natureza da unidade</label><select id="novaTipo"></select>
+      <label class="campo" for="novaNome">Denominação</label><input type="text" id="novaNome" required>
+      <label class="campo" for="novaSigla">Sigla</label><input type="text" id="novaSigla">
+    </div>
+    <div class="dialogo-acoes"><button class="botao-secundario" value="cancel" type="submit">Cancelar</button><button class="botao-primario" value="default" type="submit" id="btConfirmarNova">Criar unidade</button></div>
+  </form>
+</dialog>
+
+<dialog id="dlgVinculoModulos">
+  <form method="dialog" id="formVinculoModulos">
+    <div class="dialogo-corpo"><h2 id="tituloVinculoModulos" style="font:600 1.05rem Georgia,serif;margin-bottom:8px;"></h2><div id="textoVinculoModulos"></div></div>
+    <div class="dialogo-acoes"><button class="botao-secundario" value="cancel" type="submit">Cancelar</button><button class="botao-primario" value="confirmar" type="submit" id="btConfirmarVinculo">Continuar</button></div>
+  </form>
+</dialog>
+
+<div class="aviso-flutuante" id="toast"></div>
+
+<script src="dados-estrutura-spu.js"></script>
+<script>
+"use strict";
+
+/* ══════════════════════════════════════════════════════════════════════
+   DADOS DE REFERÊNCIA
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* Tabela CCE/FCE — origem: simulador publicado em sostena-boop/simulador-de-cargos.
+   Conferir vigência antes de usar como peça de processo. */
+const CARGOS = [
+ {codigo:'CCE 1.18', remuneracao:31919.27, pontos:9.12},
+ {codigo:'CCE 1.17', remuneracao:27943.17, pontos:7.99},
+ {codigo:'CCE 1.16', remuneracao:23409.45, pontos:6.69},
+ {codigo:'CCE 1.15', remuneracao:20327.48, pontos:5.81},
+ {codigo:'CCE 1.14', remuneracao:17387.27, pontos:4.97},
+ {codigo:'CCE 1.13', remuneracao:14419.69, pontos:4.12},
+ {codigo:'CCE 1.12', remuneracao:10856.45, pontos:3.10},
+ {codigo:'CCE 1.11', remuneracao:8656.66,  pontos:2.47},
+ {codigo:'CCE 1.10', remuneracao:7426.44,  pontos:2.12},
+ {codigo:'CCE 1.09', remuneracao:5803.78,  pontos:1.66},
+ {codigo:'CCE 1.08', remuneracao:5592.36,  pontos:1.60},
+ {codigo:'CCE 1.07', remuneracao:4847.72,  pontos:1.39},
+ {codigo:'CCE 1.06', remuneracao:4104.99,  pontos:1.17},
+ {codigo:'CCE 1.05', remuneracao:3498.47,  pontos:1.00},
+ {codigo:'CCE 1.04', remuneracao:1553.73,  pontos:0.44},
+ {codigo:'CCE 1.03', remuneracao:1294.43,  pontos:0.37},
+ {codigo:'CCE 1.02', remuneracao:723.98,   pontos:0.21},
+ {codigo:'CCE 1.01', remuneracao:428.38,   pontos:0.12},
+ {codigo:'FCE 1.17', remuneracao:16765.90, pontos:4.79},
+ {codigo:'FCE 1.16', remuneracao:14045.67, pontos:4.01},
+ {codigo:'FCE 1.15', remuneracao:12196.47, pontos:3.49},
+ {codigo:'FCE 1.14', remuneracao:10432.37, pontos:2.98},
+ {codigo:'FCE 1.13', remuneracao:8651.81,  pontos:2.47},
+ {codigo:'FCE 1.12', remuneracao:6513.87,  pontos:1.86},
+ {codigo:'FCE 1.11', remuneracao:5193.87,  pontos:1.48},
+ {codigo:'FCE 1.10', remuneracao:4455.87,  pontos:1.27},
+ {codigo:'FCE 1.09', remuneracao:3498.47,  pontos:1.00},
+ {codigo:'FCE 1.08', remuneracao:3356.01,  pontos:0.96},
+ {codigo:'FCE 1.07', remuneracao:2908.64,  pontos:0.83},
+ {codigo:'FCE 1.06', remuneracao:2463.00,  pontos:0.70},
+ {codigo:'FCE 1.05', remuneracao:2099.09,  pontos:0.60},
+ {codigo:'FCE 1.04', remuneracao:1553.73,  pontos:0.44},
+ {codigo:'FCE 1.03', remuneracao:1294.43,  pontos:0.37},
+ {codigo:'FCE 1.02', remuneracao:723.98,   pontos:0.21},
+ {codigo:'FCE 1.01', remuneracao:428.38,   pontos:0.12}
+];
+/* Categorias que não criam unidade. Faixas e valores consultados no SIORG Cidadão
+   em 29/10/2026: CCE 2 até 17; CCE 3 até 16; FCE 2 até 17; FCE 3 até 16; FCE 4 até 13. */
+const NIVEL_CCE = Object.fromEntries(CARGOS.filter(c=>c.codigo.startsWith("CCE 1.")).map(c=>[Number(c.codigo.slice(-2)),c]));
+const NIVEL_FCE = Object.fromEntries(CARGOS.filter(c=>c.codigo.startsWith("FCE 1.")).map(c=>[Number(c.codigo.slice(-2)),c]));
+[["CCE",2,17],["CCE",3,16],["FCE",2,17],["FCE",3,16],["FCE",4,13]].forEach(([tipo,categoria,max])=>{
+  const tabela=tipo==="CCE"?NIVEL_CCE:NIVEL_FCE;
+  for(let nivel=1;nivel<=max;nivel++){
+    const ref=tabela[nivel];
+    CARGOS.push({codigo:`${tipo} ${categoria}.${String(nivel).padStart(2,"0")}`,remuneracao:ref.remuneracao,pontos:ref.pontos});
+  }
+});
+const PORCOD = Object.fromEntries(CARGOS.map(c=>[c.codigo,c]));
+/* A categoria é preservada no código; o valor é o oficial para o tipo e nível. */
+const codigoReferencia = cod => {
+  const m = String(cod||"").match(/^(CCE|FCE)\s+[1234]\.(\d{2})$/);
+  return m ? `${m[1]} 1.${m[2]}` : cod;
+};
+const refCargo = cod => PORCOD[cod] || PORCOD[codigoReferencia(cod)] || null;
+const pts = cod => refCargo(cod)?.pontos || 0;
+
+const TIPOS = {
+  SPU:{rotulo:"Secretaria",         nivel:"estratégico", limite:8, cargoSugerido:"FCE 1.17"},
+  GAB:{rotulo:"Gabinete",           nivel:"estratégico", limite:8, cargoSugerido:"FCE 1.13"},
+  DIR:{rotulo:"Diretoria",          nivel:"estratégico", limite:8, cargoSugerido:"FCE 1.15"},
+  SUP:{rotulo:"Superintendência",   nivel:"estratégico", limite:8, cargoSugerido:"FCE 1.13"},
+  CG: {rotulo:"Coordenação-Geral",  nivel:"estratégico", limite:8, cargoSugerido:"FCE 1.13"},
+  CO: {rotulo:"Coordenação",        nivel:"tático",      limite:6, cargoSugerido:"FCE 1.10"},
+  DIV:{rotulo:"Divisão",            nivel:"tático",      limite:6, cargoSugerido:"FCE 1.07"},
+  SV: {rotulo:"Serviço",            nivel:"operacional", limite:3, cargoSugerido:"FCE 1.05"},
+  SEC:{rotulo:"Seção",              nivel:"operacional", limite:3, cargoSugerido:"CCE 1.04"},
+  SET:{rotulo:"Setor",              nivel:"operacional", limite:3, cargoSugerido:"FCE 1.02"},
+  OUT:{rotulo:"Outra unidade",      nivel:"operacional", limite:3, cargoSugerido:"FCE 1.05"}
+};
+const ORDEM_TIPOS = ["SPU","GAB","DIR","SUP","CG","CO","DIV","SV","SEC","SET","OUT"];
+const TIPOS_SILHUETA = ["DIR","CG","CO","DIV","SV","SEC","SET","SUP"];
+
+const V_ESTRATEGICO = ["aprovar","autorizar","avaliar","decidir","definir","editar","coordenar","formular","fixar","instaurar","supervisionar","orientar","propor","emitir","examinar"];
+const V_TATICO = ["alterar","assistir","atuar","cancelar","coordenar","conceder","decidir","distribuir","estabelecer","expedir","fiscalizar","gerir","gerenciar","indeferir","instaurar","instituir","instruir","isentar","julgar","monitorar","propor","prover","relatar","revalidar"];
+const V_OPERACIONAL = ["acompanhar","administrar","adotar","analisar","anotar","agendar","arquivar","assessorar","avaliar","conferir","criar","distribuir","divulgar","efetuar","emitir","examinar","executar","exercer","expedir","gerir","instaurar","monitorar","orientar","organizar","planejar","propor","publicar","registrar","relatar","requisitar","responder","supervisionar"];
+const VERBOS = {SPU:V_ESTRATEGICO,GAB:V_ESTRATEGICO,DIR:V_ESTRATEGICO,SUP:V_ESTRATEGICO,CG:V_ESTRATEGICO,CO:V_TATICO,DIV:V_TATICO,SV:V_OPERACIONAL,SEC:V_OPERACIONAL,SET:V_OPERACIONAL,OUT:V_OPERACIONAL};
+const VERBOS_EVITAR = ["promover","assegurar","garantir"];
+const ROMANOS = ["I","II","III","IV","V","VI","VII","VIII"];
+
+/* Texto vigente das competências — fonte: Proposta RI SPU 2026 v2, Capítulo III, arts. 41–57 */
+const TEXTO_VIGENTE = {
+DECIP:{caput:"À Diretoria de Caracterização e Incorporação de Imóveis compete:",incisos:[
+"planejar, coordenar, controlar e orientar as atividades relacionadas com a identificação, o cadastramento, à fiscalização e à incorporação imobiliária ao patrimônio da União, nas diversas modalidades de aquisição;",
+"coordenar e orientar as atividades de avaliação e contabilidade dos ativos patrimoniais da União; e",
+"planejar e coordenar as atividades de verificação in loco dos imóveis a serem incorporados, a preservação e regularização dominial desses imóveis e a articulação com entidades e instituições envolvidas."]},
+CGCAV:{caput:"À Coordenação-Geral de Avaliação e Contabilidade do Patrimônio compete propor diretrizes e critérios, coordenar, orientar e supervisionar as atividades relativas:",incisos:[
+"à avaliação dos imóveis da União ou de seu interesse;",
+"à atualização da Planta de Valores Genéricos da Secretaria do Patrimônio da União;",
+"à gestão das informações contábeis do patrimônio imobiliário;",
+"à atuação do Comitê Consultivo de Engenharia de Avaliações de Imóveis;",
+"à proposição de metodologias, padrões e soluções aplicáveis à avaliação dos imóveis da União;",
+"ao registro de valores de imóveis nos sistemas da Secretaria do Patrimônio da União; e",
+"à elaboração e ao monitoramento do Plano Anual de Avaliação dos Imóveis."]},
+COCAI:{caput:"À Coordenação de Avaliação de Imóveis compete:",incisos:[
+"gerenciar as ações de avaliação dos imóveis da União ou de seu interesse;",
+"coordenar a elaboração do Plano Anual de Avaliação dos Imóveis e monitorar sua execução pelas Superintendências;",
+"coordenar, propor e gerir as regras de negócio relativas à avaliação de imóveis nos sistemas corporativos; e",
+"coordenar a atualização da Planta de Valores Genéricos da Secretaria e monitorar sua execução pelas Superintendências."]},
+DIVAL:{caput:"À Divisão Virtual de Avaliação compete:",incisos:[
+"apoiar a Coordenação-Geral de Avaliação e Contabilidade do Patrimônio quanto à proposição de metodologias, padrões e soluções aplicáveis à avaliação dos imóveis da União;",
+"apoiar as Superintendências no atendimento prioritário das demandas estratégicas de avaliação de imóveis, definidas previamente com as unidades administrativas da Secretaria; e",
+"atuar nas metas estabelecidas pelo Plano Anual de Avaliação dos Imóveis e monitorar, junto às Superintendências, o registro de valores de imóveis nos sistemas da Secretaria."]},
+SECOP:{caput:"Ao Serviço de Contabilidade Patrimonial compete:",incisos:[
+"orientar, apoiar e gerir as atividades de registro, análise e conciliação, nos sistemas da Secretaria, das informações contábeis relativas a imóveis;",
+"coordenar a interlocução da Secretaria com a unidade setorial contábil do Ministério e com as unidades gestoras responsáveis pela gestão de imóveis da União; e",
+"propor e gerir as regras de negócio relativas à contabilização de imóveis nos sistemas corporativos."]},
+CGDEM:{caput:"À Coordenação-Geral de Demarcação compete propor diretrizes e critérios, coordenar, orientar e supervisionar as atividades relativas:",incisos:[
+"à caracterização físico-territorial de bens imóveis da União, em especial por meio da demarcação, identificação direta e discriminação;",
+"à análise de dominialidade dos bens imóveis da União quanto às informações físico-territoriais;",
+"à elaboração e homologação de plantas, memoriais descritivos e demais produtos cartográficos;",
+"às informações físico-territoriais do imóvel, especificamente quanto à sua tipologia, natureza, dimensões e localização necessárias ao cadastro imobiliário;",
+"à execução de ações de aerolevantamento com equipamentos do tipo Veículo Aéreo Não Tripulado - VANT relacionadas às suas atividades;",
+"ao Plano Nacional de Caracterização - PNC; e",
+"à atuação do Conselho Nacional de Demarcadores."]},
+CODEM:{caput:"À Coordenação de Demarcação compete:",incisos:[
+"apoiar a Coordenação-Geral de Demarcação na gestão dos processos de demarcação priorizados;",
+"coordenar as ações de proposição e alteração das normas relativas à caracterização de imóveis;",
+"gerenciar as ações do Plano Nacional de Caracterização; e",
+"gerenciar as parcerias e contratos firmados."]},
+CPDEM:{caput:"À Coordenação de Procedimentos Pós-Demarcatórios compete:",incisos:[
+"apoiar a Coordenação-Geral de Demarcação na gestão dos procedimentos de notificação, análise de requerimentos e recursos administrativos, impugnações e levantamento físico-territorial das áreas e imóveis necessários ao cadastro imobiliário;",
+"apoiar a Coordenação-Geral de Demarcação nas ações de aerolevantamento com equipamentos do tipo Veículo Aéreo Não Tripulado – VANT;",
+"coordenar as ações de proposição e alteração das normas relativas aos processos e procedimentos pós-demarcatórios;",
+"gerenciar as informações físico-territoriais dos imóveis necessárias ao cadastro imobiliário, especificamente quanto à sua tipologia, natureza, dimensões e localização;",
+"elaborar e gerenciar as ações pós-demarcatórias referentes aos instrumentos de planejamento e governança da demarcação; e",
+"gerenciar as parcerias e contratos firmados para ações dos processos e procedimentos pós-demarcatórios."]},
+DIDEM:{caput:"À Divisão Virtual de Demarcação compete:",incisos:[
+"coordenar, junto às pessoas que as presidem, o planejamento, a execução e as entregas das comissões de demarcação no âmbito do Plano Nacional de Caracterização;",
+"coordenar a distribuição de pessoas técnicas especializadas da Coordenação-Geral de Demarcação na execução do Plano Nacional de Caracterização e supervisionar suas atividades;",
+"coordenar as aquisições de insumos necessários à demarcação; e",
+"coordenar as parcerias que fomentem a execução do Plano Nacional de Caracterização."]},
+SECAR:{caput:"Ao Serviço de Identificação e Caracterização compete apoiar a Coordenação-Geral de Demarcação na gestão dos processos administrativos, do cadastro imobiliário e das análises de dominialidade.",incisos:[]},
+CGFIS:{caput:"À Coordenação-Geral de Fiscalização compete coordenar, orientar e supervisionar as atividades relativas:",incisos:[
+"à fiscalização e ao controle da utilização dos imóveis da União;",
+"ao levantamento e verificação das condições de ocupação, delimitação e preservação dos imóveis a serem incorporados;",
+"à discriminação, reivindicação de domínio e reintegração de posse dos bens imóveis da União;",
+"à manutenção, à regularização cadastral e à operação das Aeronaves Remotamente Pilotadas utilizadas pela Secretaria;",
+"à elaboração e ao monitoramento do Plano Anual de Fiscalização dos Imóveis da União - PAF; e",
+"ao subsídio técnico às decisões da autoridade responsável pela Secretaria do Patrimônio da União em recursos administrativos interpostos em decorrência de infrações contra o patrimônio da União."]},
+COFIS:{caput:"À Coordenação de Fiscalização compete:",incisos:[
+"gerenciar as ações de fiscalização e controle de utilização dos imóveis da União;",
+"orientar as Superintendências na elaboração dos Planos Anuais Estaduais de Fiscalização dos Imóveis da União - PAEFs e monitorar sua execução;",
+"coordenar a utilização da geointeligência e geotecnologias associadas à fiscalização de imóveis de maneira integrada aos padrões, diretrizes e sistemas corporativos de geoinformação da Secretaria do Patrimônio da União;",
+"propor e coordenar ações de pesquisa, desenvolvimento e inovação; e",
+"capacitar e transferir conhecimentos teóricos e práticos relativos à atividade fiscalizatória."]},
+CGINC:{caput:"À Coordenação-Geral de Incorporação compete propor diretrizes e critérios, coordenar, orientar e supervisionar as atividades relativas:",incisos:[
+"à aquisição de bens imóveis de interesse da União;",
+"à incorporação, ao patrimônio da União, dos bens imóveis adquiridos por meio de títulos e daqueles de domínio constitucional;",
+"à regularização patrimonial de bens imóveis da União, por meio da devida anotação das retificações, complementações, atualizações de dados cadastrais, cartoriais e atos pertinentes à aquisição ou incorporação de bens imóveis em nome da União, excluídas aquelas relativas às destinações;",
+"à transferência de gestão e de domínio de bens imóveis de terceiros à União, naquilo que for compatível com a verificação da situação patrimonial; e",
+"ao cadastro dos imóveis nos sistemas corporativos da Secretaria, no que tange às informações físico-territoriais do imóvel e às atividades de aquisição, incorporação e regularização patrimonial."]},
+COINC:{caput:"À Coordenação de Incorporação compete apoiar a Coordenação-Geral de Incorporação nas atividades de normatização, orientação e modernização.",incisos:[]},
+DINC:{caput:"À Divisão de Incorporação compete apoiar a Coordenação-Geral de Incorporação na gestão de processos de aquisição por meio de títulos e incorporação de imóveis ao patrimônio da União.",incisos:[]},
+DIADE:{caput:"À Divisão de Incorporação de Áreas Demarcadas compete apoiar a Coordenação-Geral de Incorporação nas atividades de incorporação de imóveis de origem constitucional da União.",incisos:[]},
+DIFIS:{caput:"À Divisão Virtual de Fiscalização compete:",incisos:[
+"examinar a admissibilidade e realizar a instrução dos recursos de reconsideração, de revisão e de pedido de reexame interpostos contra atos praticados nas Superintendências que resultem em aplicação de sanções decorrentes de infrações contra o patrimônio imobiliário da União;",
+"elaborar pareceres técnicos em processos específicos de fiscalização oriundos da autuação de fiscais no âmbito das Superintendências do Patrimônio da União;",
+"propor à autoridade assessorada a realização de diligências, a serem executadas pela unidade responsável; e",
+"sugerir, mediante análise documental dos processos administrativos de fiscalização, decisão sobre recurso administrativo de autuação em primeira instância, proferida pela autoridade responsável pela Superintendência do Patrimônio da União."]}
+};
+
+/* Base reconciliada: códigos/cargos do SIORG; nomes e quatro vinculações do RI SPUv2;
+   retificação posterior aplicada à Divisão de Vendas. */
+const BASE = window.BASE_SPU || [];
+const CODIGOS_CARGO = [...new Set([
+  ...CARGOS.map(c=>c.codigo),
+  ...BASE.flatMap(u=>u.cargos.map(c=>c.codigo))
+])].sort((a,b)=>a.localeCompare(b,"pt-BR",{numeric:true}));
+const CODIGOS_UNIDADE = CODIGOS_CARGO.filter(c=>/^(CCE|FCE)\s+1\./.test(c));
+const CODIGOS_VINCULADOS = CODIGOS_CARGO.filter(c=>/^(CCE\s+[23]|FCE\s+[234])\./.test(c));
+
+/* ══════════════════════════════════════════════════════════════════════
+   ESTADO
+   ══════════════════════════════════════════════════════════════════════ */
+
+const CHAVE_LOCAL = "ferramenta-transicao-spu-v2";
+let cenario = null;
+let selecionadoReg = null;
+let selecionadoEstrutura = null;
+let paiNovaUnidade = "1986";
+let contadorNovas = 0;
+let filtroEstrutura = "";
+let filtroComparativo = "todas";
+let filtroConsulta = "todas";
+let direcaoVinculo = null;
+const abertos = new Set();
+
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+function esc(t){ const d=document.createElement("div"); d.textContent = (t==null?"":String(t)); return d.innerHTML; }
+const fmtP = v => v.toLocaleString("pt-BR",{minimumFractionDigits:2, maximumFractionDigits:2});
+const fmtM = v => v.toLocaleString("pt-BR",{style:"currency", currency:"BRL"});
+
+function cenarioNovo(){
+  contadorNovas = 0;
+  const agora = new Date().toISOString();
+  return {
+    versao: 3,
+    metaBase: window.META_BASE_SPU,
+    nome: "Cenário A",
+    projeto: {abertoEm:agora, subtitulo:"", prazo:"", processoSei:"", estado:"Em elaboração", observacoes:"", metaTipo:"livre", metaPontos:0, notas:[]},
+    historico: [{id:`evento_${Date.now()}`,tipo:"marco",data:agora,texto:"Projeto criado com a estrutura de referência."}],
+    decretoEditavel: false,
+    criadoEm: agora,
+    unidades: BASE.map(origem => {
+      const u = structuredClone(origem);
+      const titular = u.cargos.find(c=>c.principal);
+      return {
+        ...u,
+        cargo: titular.codigo,
+        cargoTitulo: titular.titulo,
+        cargoConferido: true,
+        extinta: false,
+        comp: { caput:"", incisos:[], obs:"" }, notas:[],
+        base: {...structuredClone(u), cargo:titular.codigo, cargoTitulo:titular.titulo}
+      };
+    }),
+    ajustes: { ext:[], cri:[] }
+  };
+}
+
+function prepararCenario(d){
+  const abertoEm = d.criadoEm || new Date().toISOString();
+  d.versao = Math.max(Number(d.versao)||2,3);
+  d.nome = d.nome && d.nome!=="Transição — SPU" ? d.nome : "Cenário A";
+  d.projeto = {...{abertoEm,subtitulo:"",prazo:"",processoSei:"",estado:"Em elaboração",observacoes:"",metaTipo:"livre",metaPontos:0,notas:[]},...(d.projeto||{})};
+  d.projeto.estado = d.projeto.estado==="Concluído" ? "Concluída" : (d.projeto.estado==="Em elaboração" ? "Em elaboração" : "Em elaboração");
+  d.projeto.notas = Array.isArray(d.projeto.notas) ? d.projeto.notas : [];
+  if(!d.projeto.notas.length && Array.isArray(d.reunioes)){
+    d.projeto.notas = d.reunioes.flatMap(r=>(r.notas||[]).map(n=>({id:n.id||`nota_${Date.now()}`,data:n.data||r.inicio,texto:n.texto,unidadeId:n.unidadeId||null})));
+  }
+  d.unidades.forEach(u=>{ u.notas=Array.isArray(u.notas)?u.notas:[]; });
+  d.historico = Array.isArray(d.historico) ? d.historico : [];
+  d.historico = d.historico.filter(h=>h.tipo!=="nota");
+  d.ajustes = {ext:[],cri:[]};
+  return d;
+}
+
+const acharU = id => cenario.unidades.find(u=>u.id===id);
+const ativas = () => cenario.unidades.filter(u=>!u.extinta);
+const cargoPrincipal = u => u.cargos.find(c=>c.principal) || u.cargos[0];
+const cargosTexto = u => u.cargos.map(c=>`${c.titulo}: ${c.codigo}${c.quantidade!==1?` × ${c.quantidade}`:""}`).join("; ");
+
+/* Ordem de árvore: raízes primeiro, cada uma seguida dos seus descendentes. */
+function arvoreOrdenada(){
+  const saida = [];
+  const porPai = {};
+  cenario.unidades.forEach(u=>{
+    const p = (u.pai && acharU(u.pai)) ? u.pai : "__raiz__";
+    (porPai[p] = porPai[p] || []).push(u);
+  });
+  function desce(chave, nivel){
+    (porPai[chave]||[]).forEach(u=>{
+      saida.push({u, nivel});
+      desce(u.id, nivel+1);
+    });
+  }
+  desce("__raiz__", 0);
+  /* Segurança contra ciclos: qualquer unidade não visitada entra no fim. */
+  cenario.unidades.forEach(u=>{ if(!saida.some(x=>x.u.id===u.id)) saida.push({u, nivel:0}); });
+  return saida;
+}
+
+function descendentes(id){
+  const filhos = cenario.unidades.filter(u=>u.pai===id);
+  return filhos.reduce((acc,f)=>acc.concat([f], descendentes(f.id)), []);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   CÁLCULO DE PONTOS
+   ══════════════════════════════════════════════════════════════════════ */
+
+function movimentos(){
+  const linhas = [];
+  cenario.unidades.forEach(u=>{
+    if(u.base && u.extinta){
+      u.base.cargos.forEach(c=>linhas.push({origem:`${u.base.nome} — ${c.titulo}`, mov:"Extinção de posição", cargo:c.codigo, qtd:c.quantidade, lib:pts(c.codigo)*c.quantidade, con:0}));
+    } else if(!u.base && !u.extinta){
+      u.cargos.forEach(c=>linhas.push({origem:`${u.nome||"(unidade sem denominação)"} — ${c.titulo}`, mov:"Criação de posição", cargo:c.codigo, qtd:c.quantidade, lib:0, con:pts(c.codigo)*c.quantidade}));
+    } else if(u.base && !u.extinta){
+      const atuais = new Map(u.cargos.map(c=>[c.id,c]));
+      const anteriores = new Map(u.base.cargos.map(c=>[c.id,c]));
+      anteriores.forEach((antes,id)=>{
+        const depois = atuais.get(id);
+        if(!depois){
+          linhas.push({origem:`${u.nome} — ${antes.titulo}`,mov:"Extinção de posição",cargo:antes.codigo,qtd:antes.quantidade,lib:pts(antes.codigo)*antes.quantidade,con:0});
+          return;
+        }
+        const valorAntes = pts(antes.codigo)*antes.quantidade;
+        const valorDepois = pts(depois.codigo)*depois.quantidade;
+        if(antes.codigo!==depois.codigo || antes.quantidade!==depois.quantidade){
+          const d = valorAntes-valorDepois;
+          linhas.push({origem:`${u.nome} — ${depois.titulo}`,mov:`Alteração (${antes.codigo} × ${antes.quantidade} → ${depois.codigo} × ${depois.quantidade})`,cargo:depois.codigo,qtd:depois.quantidade,lib:d>0?d:0,con:d<0?-d:0});
+        }
+      });
+      atuais.forEach((depois,id)=>{
+        if(!anteriores.has(id)) linhas.push({origem:`${u.nome} — ${depois.titulo}`,mov:"Criação de posição",cargo:depois.codigo,qtd:depois.quantidade,lib:0,con:pts(depois.codigo)*depois.quantidade});
+      });
+    }
+  });
+  return linhas;
+}
+
+function totalAjustes(lista){
+  return lista.reduce((s,l)=> s + (Number(l.qtd)||0) * pts(l.codigo), 0);
+}
+
+function totais(){
+  const m = movimentos();
+  const lib = m.reduce((s,l)=>s+l.lib,0);
+  const con = m.reduce((s,l)=>s+l.con,0);
+  return {lib, con, saldo: lib-con};
+}
+
+/* Soma de todas as posições vinculadas às unidades. Não há cargos avulsos. */
+function totaisEstrutura(){
+  let atual = 0, proposta = 0;
+  cenario.unidades.forEach(u=>{
+    if(u.base) atual += u.base.cargos.reduce((s,c)=> s + pts(c.codigo)*(Number(c.quantidade)||0), 0);
+    if(!u.extinta) proposta += u.cargos.reduce((s,c)=> s + pts(c.codigo)*(Number(c.quantidade)||0), 0);
+  });
+  return {atual, proposta, delta: proposta - atual};
+}
+
+function contagem(qual){
+  const c = Object.fromEntries(ORDEM_TIPOS.map(tp=>[tp,0]));
+  cenario.unidades.forEach(u=>{
+    if(qual==="atual"){ if(u.base) c[u.base.tipo] = (c[u.base.tipo]||0)+1; }
+    else { if(!u.extinta) c[u.tipo] = (c[u.tipo]||0)+1; }
+  });
+  return c;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   PAINEL FIXO
+   ══════════════════════════════════════════════════════════════════════ */
+
+function renderPainelFixo(){
+  const t = totais();
+  $("#mLib").textContent = fmtP(t.lib);
+  $("#mCon").textContent = fmtP(t.con);
+  $("#mSaldo").textContent = fmtP(t.saldo);
+  const box = $("#mSaldoBox");
+  box.className = "m saldo " + (t.saldo > 0.0001 ? "positivo" : t.saldo < -0.0001 ? "negativo" : "zerado");
+
+  const te = totaisEstrutura();
+  $("#mTotal").textContent = fmtP(te.proposta);
+  const sinalTotal = Math.abs(te.delta) < 0.0001 ? ""
+    : ` <span class="delta ${te.delta>0?"mais":"menos"}">(${te.delta>0?"+":"−"}${fmtP(Math.abs(te.delta))})</span>`;
+  $("#mTotalRef").innerHTML = `situação atual: <b>${fmtP(te.atual)}</b>${sinalTotal}`;
+
+  const tipoMeta=cenario.projeto.metaTipo||"livre", alvo=Math.max(0,Number(cenario.projeto.metaPontos)||0), metaBox=$("#mMetaBox");
+  metaBox.className="m";
+  if(tipoMeta==="reduzir"){
+    const alcancado=Math.max(0,-te.delta), falta=Math.max(0,alvo-alcancado);
+    $("#mMeta").textContent=`${fmtP(alcancado)} de ${fmtP(alvo)}`;
+    $("#mMetaRef").textContent=falta>0?`faltam ${fmtP(falta)} pontos`:"meta alcançada";
+    metaBox.classList.add(falta>0?"meta-atencao":"meta-ok");
+  }else if(tipoMeta==="aumentar"){
+    const usado=Math.max(0,te.delta), disponivel=alvo-usado;
+    $("#mMeta").textContent=`${fmtP(usado)} de ${fmtP(alvo)}`;
+    $("#mMetaRef").textContent=disponivel>=0?`${fmtP(disponivel)} disponíveis`:`excedeu ${fmtP(Math.abs(disponivel))}`;
+    metaBox.classList.add(disponivel>=0?"meta-ok":"meta-atencao");
+  }else if(tipoMeta==="manter"){
+    const desvio=Math.abs(te.delta);
+    $("#mMeta").textContent=desvio<0.0001?"Mantida":fmtP(desvio);
+    $("#mMetaRef").textContent=desvio<0.0001?"sem variação":`${te.delta>0?"reduzir":"repor"} ${fmtP(desvio)} pontos`;
+    metaBox.classList.add(desvio<0.0001?"meta-ok":"meta-atencao");
+  }else{
+    $("#mMeta").textContent="Sem meta"; $("#mMetaRef").textContent="";
+  }
+
+  const a = contagem("atual"), p = contagem("proposta");
+  $("#silhuetaItens").innerHTML = TIPOS_SILHUETA.map(tp=>{
+    const d = p[tp]-a[tp];
+    const sinal = d===0 ? "" : ` <span class="delta ${d>0?"mais":"menos"}">(${d>0?"+":""}${d})</span>`;
+    return `<span class="s">${TIPOS[tp].rotulo}: <b>${a[tp]}</b> → <b>${p[tp]}</b>${sinal}</span>`;
+  }).join("");
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   ABA 1 — ESTRUTURA
+   ══════════════════════════════════════════════════════════════════════ */
+
+function opcoesCargo(sel, principal=false){
+  const base = principal ? CODIGOS_UNIDADE : CODIGOS_VINCULADOS;
+  const lista = base.includes(sel) ? base : [sel,...base].filter(Boolean);
+  return lista.map(codigo=>`<option value="${codigo}" ${codigo===sel?"selected":""}>${codigo} · ${fmtP(pts(codigo))} pt</option>`).join("");
+}
+function opcoesTipo(sel){
+  return ORDEM_TIPOS.map(t=>`<option value="${t}" ${t===sel?"selected":""}>${TIPOS[t].rotulo}</option>`).join("");
+}
+function opcoesPai(u){
+  const proibidos = new Set([u.id, ...descendentes(u.id).map(d=>d.id)]);
+  const opts = ['<option value="">— primeiro nível —</option>'];
+  arvoreOrdenada().forEach(({u:o, nivel})=>{
+    if(proibidos.has(o.id) || o.extinta) return;
+    const prefixo = " ".repeat(nivel*2);
+    opts.push(`<option value="${o.id}" ${u.pai===o.id?"selected":""}>${prefixo}${esc(o.sigla||o.nome.slice(0,18))}</option>`);
+  });
+  return opts.join("");
+}
+
+function chipsDe(u){
+  const c = [];
+  if(u.extinta) c.push('<span class="chip ext">extinta</span>');
+  if(!u.base) c.push('<span class="chip nova">nova</span>');
+  if(u.base && !u.extinta){
+    if(u.nome.trim() !== u.base.nome) c.push('<span class="chip ren">renomeada</span>');
+    if(JSON.stringify(u.cargos) !== JSON.stringify(u.base.cargos)) c.push('<span class="chip cargo">cargos</span>');
+    if((u.pai||"") !== (u.base.pai||"")) c.push('<span class="chip mov">remanejada</span>');
+    if(!u.cargoConferido) c.push('<span class="chip conf" title="Nível de cargo é sugestão da ferramenta; confira no Anexo II do decreto">nível a conferir</span>');
+  }
+  return c.join(" ");
+}
+
+function renderArvore(){
+  const alvo = $("#arvore");
+  const termo = filtroEstrutura.trim().toLocaleLowerCase("pt-BR");
+  let visiveis = null;
+  if(termo){
+    visiveis = new Set();
+    cenario.unidades.forEach(u=>{
+      const alvoBusca = [u.nome,u.sigla].join(" ").toLocaleLowerCase("pt-BR");
+      if(!alvoBusca.includes(termo)) return;
+      let atual = u;
+      while(atual){ visiveis.add(atual.id); atual = atual.pai ? acharU(atual.pai) : null; }
+    });
+  }
+  const filhos = id => cenario.unidades.filter(u=>u.pai===id && (!visiveis || visiveis.has(u.id)))
+    .sort((a,b)=>a.nome.localeCompare(b.nome,"pt-BR"));
+  const aberta = id => abertos.has(id) || (!!visiveis && visiveis.has(id));
+
+  function editorUnidade(u){
+    const podeExcluir = !u.base && descendentes(u.id).length===0;
+    const cargosOrdenados = [...u.cargos].sort((a,b)=>Number(!!b.principal)-Number(!!a.principal));
+    const posicoes = cargosOrdenados.map(c=>`<div class="posicao" data-pos="${c.id}">
+      <label><span class="mini-rotulo">${c.principal?"Cargo que chefia a unidade":"Outro cargo vinculado"}</span><input type="text" data-pos-campo="titulo" value="${esc(c.titulo)}" ${u.extinta?"disabled":""}></label>
+      <label><span class="mini-rotulo">Código</span><select data-pos-campo="codigo" ${u.extinta?"disabled":""}>${opcoesCargo(c.codigo,!!c.principal)}</select></label>
+      <label><span class="mini-rotulo">Qtd.</span><input type="number" min="1" data-pos-campo="quantidade" value="${c.quantidade}" ${u.extinta?"disabled":""}></label>
+      ${c.principal?'<span class="chip conf">chefia</span>':`<button type="button" class="perigo" data-remover-pos="${c.id}" ${u.extinta?"disabled":""}>remover</button>`}
+    </div>`).join("");
+    const atual = u.base ? `<dl class="comparacao-atual"><dt>Denominação</dt><dd>${esc(u.base.nome)}</dd><dt>Sigla</dt><dd>${esc(u.base.sigla||"—")}</dd><dt>Subordinação</dt><dd>${esc(acharU(u.base.pai)?.base?.nome || acharU(u.base.pai)?.nome || "—")}</dd></dl>` : '<p class="vazio">Unidade nova, sem equivalente na estrutura de referência.</p>';
+    const notas=(u.notas||[]).slice().reverse().map(n=>`<div class="nota-item"><p>${esc(n.texto)}</p><div class="linha-nota"><small>${dataHora(n.data)}</small><button type="button" class="perigo" data-remover-nota="${n.id}">remover</button></div></div>`).join("");
+    return `<div class="painel editor-unidade" data-editor="${u.id}">
+      <div class="cab-editor"><div><span class="rotulo-miudo">Unidade selecionada</span><h3>${esc(u.nome||"Nova unidade")}</h3></div>${chipsDe(u)}</div>
+      <details class="leitura"><summary>Estrutura atual — referência congelada</summary>${atual}</details>
+      <h3 style="margin-top:16px;">Proposta neste cenário</h3>
+      <div class="campos-unidade">
+        <label><span class="mini-rotulo">${u.tipo==="SPU"?"Denominação da Secretaria":"Denominação"}</span><input type="text" data-campo="nome" value="${esc(u.nome)}" ${u.extinta?"disabled":""}></label>
+        <label><span class="mini-rotulo">Sigla</span><input type="text" data-campo="sigla" value="${esc(u.sigla)}" ${u.extinta?"disabled":""}></label>
+        <label><span class="mini-rotulo">Natureza</span><select data-campo="tipo" ${u.extinta?"disabled":""}>${opcoesTipo(u.tipo)}</select></label>
+        <label><span class="mini-rotulo">Subordinação</span><select data-campo="pai" ${u.extinta?"disabled":""}>${opcoesPai(u)}</select></label>
+      </div>
+      ${u.tipo==="SPU"?'<div class="aviso info">A denominação da Secretaria e o cargo que a chefia podem ser alterados neste cenário. Uma troca entre FCE e CCE entra automaticamente no saldo e no quadro comparativo.</div>':""}
+      <div class="posicoes"><span class="mini-rotulo">Cargos e funções vinculados à unidade</span>${posicoes}
+        <button class="add" type="button" data-add-pos ${u.extinta?"disabled":""}>+ Outro cargo vinculado</button></div>
+      <div class="acoes-unidade">
+        <button type="button" data-acao="filha" ${u.extinta?"disabled":""}>+ Subunidade</button>
+        ${u.extinta?'<button type="button" data-acao="restaurar">restaurar</button>':'<button type="button" class="perigo" data-acao="extinguir">extinguir</button>'}
+        ${podeExcluir?'<button type="button" class="perigo" data-acao="excluir">excluir</button>':""}
+      </div>
+      <details class="leitura" style="margin-top:16px;" open><summary>Notas desta unidade (${(u.notas||[]).length})</summary>
+        <div class="nota-form" style="margin-top:10px;"><textarea data-nova-nota placeholder="Registre uma observação sobre esta unidade..."></textarea><button type="button" class="botao-secundario" data-adicionar-nota>Adicionar nota</button></div>
+        <div class="notas-lista">${notas||'<p class="vazio">Nenhuma nota para esta unidade.</p>'}</div>
+      </details></div>`;
+  }
+
+  function unidadeHtml(u,nivel,filhosForcados=null){
+    const estaAberta = aberta(u.id);
+    const listaFilhos = filhosForcados || filhos(u.id);
+    const pontos = u.cargos.reduce((s,c)=>s+(refCargo(c.codigo)?.pontos||0)*(Number(c.quantidade)||1),0);
+    return `<details class="unidade-acordeao ${u.extinta?"extinta":""} ${u.id===selecionadoEstrutura?"selecionada":""}" data-detalhe-u="${u.id}" style="--nivel:${nivel}" ${estaAberta?"open":""}>
+      <summary><span class="resumo-unidade"><span class="tipo ${u.tipo}">${u.tipo}</span>
+        <span class="nome-resumo">${esc(u.nome||"(sem denominação)")}</span>
+        <span class="meta-resumo">${esc(u.sigla||"Sem sigla")} · ${fmtP(pontos)} pontos</span>
+        <span class="chips">${chipsDe(u)}</span></span></summary>
+      ${estaAberta?`<div class="filhos-unidade">${listaFilhos.map(f=>unidadeHtml(f,nivel+1)).join("")}</div>`:""}
+    </details>`;
+  }
+
+  function macro(id,titulo,unidades){
+    const lista = unidades.filter(u=>!visiveis || visiveis.has(u.id));
+    if(visiveis && !lista.length) return "";
+    const estaAberta = !!visiveis || aberta(id);
+    return `<details class="macro" data-macro="${id}" ${estaAberta?"open":""}><summary>${esc(titulo)} <span class="conta">(${lista.length})</span></summary>
+      ${estaAberta?`<div class="macro-conteudo">${lista.map(u=>unidadeHtml(u,0)).join("")}</div>`:""}</details>`;
+  }
+
+  const raiz = acharU("1986");
+  const diretos = cenario.unidades.filter(u=>u.pai==="1986");
+  const gabinete = diretos.filter(u=>u.tipo==="GAB");
+  const diretorias = diretos.filter(u=>u.tipo==="DIR").sort((a,b)=>a.nome.localeCompare(b.nome,"pt-BR"));
+  const superintendencias = diretos.filter(u=>u.tipo==="SUP").sort((a,b)=>a.nome.localeCompare(b.nome,"pt-BR"));
+  const tecnicas = diretos.filter(u=>!["GAB","DIR","SUP"].includes(u.tipo)).sort((a,b)=>a.nome.localeCompare(b.nome,"pt-BR"));
+  const secretaria = raiz && (!visiveis || visiveis.has(raiz.id)) ? [raiz] : [];
+  const secretariaDiretos = gabinete.filter(u=>!visiveis||visiveis.has(u.id));
+  const raizHtml = secretaria.length ? unidadeHtml(raiz,0,secretariaDiretos) : "";
+  const secretariaAberta = !!visiveis || aberta("macro-secretaria");
+  const secretariaMacro = secretaria.length ? `<details class="macro" data-macro="macro-secretaria" ${secretariaAberta?"open":""}><summary>Secretaria <span class="conta">(Gabinete)</span></summary>${secretariaAberta?`<div class="macro-conteudo">${raizHtml}</div>`:""}</details>` : "";
+  alvo.innerHTML = `${secretariaMacro}
+    ${diretorias.map(d=>macro(`macro-diretoria-${d.id}`,d.nome,[d])).join("")}
+    ${tecnicas.map(u=>macro(`macro-direta-${u.id}`,u.nome,[u])).join("")}
+    ${macro("macro-superintendencias","Superintendências",superintendencias)}` || '<p class="vazio">Nenhuma unidade encontrada.</p>';
+
+  alvo.querySelectorAll("details[data-detalhe-u],details[data-macro]").forEach(det=>{
+    det.querySelector(":scope > summary").addEventListener("click",ev=>{
+      ev.preventDefault();
+      const id = det.dataset.detalheU || det.dataset.macro;
+      if(det.dataset.detalheU) selecionadoEstrutura = det.dataset.detalheU;
+      abertos.has(id) ? abertos.delete(id) : abertos.add(id);
+      renderArvore();
+    });
+  });
+
+  const selecionada = acharU(selecionadoEstrutura);
+  $("#editorEstrutura").innerHTML = selecionada ? editorUnidade(selecionada) : '<div class="painel leitura"><p class="vazio">Selecione uma unidade na árvore para comparar e editar.</p></div>';
+  document.querySelectorAll("#editorEstrutura [data-editor]").forEach(linha=>{
+    const id = linha.dataset.editor;
+    linha.querySelectorAll("input[data-campo]").forEach(inp=>{
+      inp.addEventListener("input", ev=>{
+        const u = acharU(id);
+        u[ev.target.dataset.campo] = ev.target.value;
+        renderPainelFixo(); guardar();
+      });
+      inp.addEventListener("change", ()=> renderTudo());
+    });
+    linha.querySelectorAll("select[data-campo]").forEach(sel=>{
+      sel.addEventListener("change", ev=>{
+        const u = acharU(id);
+        const campo = sel.dataset.campo;
+        if(campo==="pai"){
+          const anterior=u.pai; u.pai = ev.target.value || null;
+          registrarHistorico("alteracao",`${u.nome} foi remanejada para ${acharU(u.pai)?.nome||"o primeiro nível"}.`,u.id,{anterior});
+        }
+        else u[campo] = ev.target.value;
+        renderTudo();
+      });
+    });
+    linha.querySelectorAll("[data-pos]").forEach(bloco=>{
+      const pos = acharU(id).cargos.find(c=>c.id===bloco.dataset.pos);
+      bloco.querySelectorAll("[data-pos-campo]").forEach(campo=>{
+        campo.addEventListener("change",ev=>{
+          pos[ev.target.dataset.posCampo] = ev.target.dataset.posCampo==="quantidade" ? Math.max(1,Number(ev.target.value)||1) : ev.target.value;
+          if(pos.principal){ const u=acharU(id); u.cargo=pos.codigo; u.cargoTitulo=pos.titulo; }
+          renderTudo();
+        });
+      });
+    });
+    linha.querySelector("[data-add-pos]")?.addEventListener("click",()=>{
+      const u=acharU(id); const codigo=CODIGOS_VINCULADOS[0]; u.cargos.push({id:`${id}:nova:${Date.now()}`,codigo,titulo:"Cargo ou função vinculada",quantidade:1,principal:false,fonte:"cenário"}); renderTudo();
+    });
+    linha.querySelectorAll("[data-remover-pos]").forEach(b=>b.addEventListener("click",()=>{
+      const u=acharU(id); u.cargos=u.cargos.filter(c=>c.id!==b.dataset.removerPos); renderTudo();
+    }));
+    linha.querySelectorAll("button[data-acao]").forEach(b=>{
+      b.addEventListener("click", ()=> acaoUnidade(id, b.dataset.acao));
+    });
+    linha.querySelector("[data-adicionar-nota]")?.addEventListener("click",()=>{
+      const texto=linha.querySelector("[data-nova-nota]").value.trim(); if(!texto) return;
+      const u=acharU(id); u.notas=u.notas||[]; u.notas.push({id:`nota_${Date.now()}`,data:new Date().toISOString(),texto});
+      renderTudo();
+    });
+    linha.querySelectorAll("[data-remover-nota]").forEach(b=>b.addEventListener("click",()=>{
+      const u=acharU(id); u.notas=(u.notas||[]).filter(n=>n.id!==b.dataset.removerNota); renderTudo();
+    }));
+  });
+}
+
+function acaoUnidade(id, acao){
+  const u = acharU(id);
+  if(!u) return;
+  if(acao==="filha"){
+    const proxTipo = {SPU:"CG",GAB:"CO",DIR:"CG",SUP:"CO",CG:"CO",CO:"DIV",DIV:"SV",SV:"SEC",SEC:"SEC",SET:"SET",OUT:"SV"}[u.tipo] || "CO";
+    abrirNovaUnidade(u.id, proxTipo);
+  }
+  else if(acao==="extinguir"){
+    const ramo = [u,...descendentes(u.id).filter(f=>!f.extinta)];
+    const msg = ramo.length>1
+      ? `A unidade "${u.nome}" possui ${ramo.length-1} unidade(s) subordinada(s).\n\nOK: extinguir todo o ramo.\nCancelar: voltar para remanejar as subordinadas antes.`
+      : `Extinguir "${u.nome}"?`;
+    if(!confirm(msg)) return;
+    ramo.forEach(f=> f.extinta = true);
+    registrarHistorico("alteracao",ramo.length>1?`Ramo de ${u.nome} marcado para extinção (${ramo.length} unidades).`:`${u.nome} marcada para extinção.`,u.id);
+    if(selecionadoReg===u.id) selecionadoReg = null;
+  }
+  else if(acao==="restaurar"){ u.extinta = false; }
+  else if(acao==="excluir"){
+    if(!confirm(`Excluir a unidade nova "${u.nome||"(sem denominação)"}"? Ela some do cenário, sem virar extinção.`)) return;
+    cenario.unidades = cenario.unidades.filter(x=>x.id!==id);
+    if(selecionadoReg===id) selecionadoReg = null;
+    if(selecionadoEstrutura===id) selecionadoEstrutura = null;
+  }
+  renderTudo();
+}
+
+function abrirNovaUnidade(paiId, tipo){
+  paiNovaUnidade = paiId;
+  $("#novaCargo").innerHTML = CODIGOS_UNIDADE.map(codigo=>`<option value="${codigo}" ${codigo===TIPOS[tipo].cargoSugerido?"selected":""}>${codigo} · ${fmtP(refCargo(codigo).pontos)} pontos</option>`).join("");
+  $("#novaTipo").innerHTML = opcoesTipo(tipo);
+  $("#novaNome").value=""; $("#novaSigla").value="";
+  $("#dlgNovaUnidade").showModal();
+}
+
+function criarUnidade(paiId, tipo, codigo, nome, sigla){
+  contadorNovas++;
+  const id = "nova_" + Date.now().toString(36) + "_" + contadorNovas;
+  const numNovas = cenario.unidades.filter(x=>/^NOV-/.test(x.siorg||"")).length+1;
+  const titulo = tipo==="CG"?"Coordenador-Geral":tipo==="CO"?"Coordenador":tipo==="DIR"?"Diretor":tipo==="SUP"?"Superintendente":"Chefe";
+  const nova = {
+    id, tipo, siorg:`NOV-${String(numNovas).padStart(3,"0")}`, sigla, nome, pai: paiId,
+    cargos:[{id:`${id}:1`,codigo,titulo,quantidade:1,principal:true,fonte:"cenário"}],
+    cargo:codigo, cargoTitulo:titulo, cargoConferido: true, extinta: false,
+    comp: {caput:"", incisos:[], obs:""}, notas:[], base: null
+  };
+  cenario.unidades.push(nova);
+  selecionadoEstrutura = nova.id;
+  abertos.add(nova.id);
+  if(paiId) abertos.add(paiId);
+  registrarHistorico("alteracao",`${nome} (${sigla||nova.siorg}) criada com ${codigo}.`,nova.id);
+  renderTudo();
+  const alvo = document.querySelector(`[data-editor="${nova.id}"] input[data-campo="nome"]`);
+  if(alvo) alvo.focus();
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   ABA 2 — CARGOS E PONTOS
+   ══════════════════════════════════════════════════════════════════════ */
+
+function renderPontos(){
+  const linhas = movimentos();
+  const corpo = $("#tabDerivado tbody");
+  if(!linhas.length){
+    corpo.innerHTML = `<tr><td colspan="5" class="vazio">Nenhuma alteração de estrutura até aqui. Extinga, crie ou altere o nível de uma unidade na aba Estrutura.</td></tr>`;
+  } else {
+    const somaL = linhas.reduce((s,l)=>s+l.lib,0), somaC = linhas.reduce((s,l)=>s+l.con,0);
+    corpo.innerHTML = linhas.map(l=>`<tr>
+        <td>${esc(l.origem)}</td><td>${esc(l.mov)}</td><td>${esc(l.cargo)}${l.qtd&&l.qtd!==1?` × ${l.qtd}`:""}</td>
+        <td class="num">${l.lib?fmtP(l.lib):"—"}</td><td class="num">${l.con?fmtP(l.con):"—"}</td>
+      </tr>`).join("")
+      + `<tr class="total"><td colspan="3">Subtotal da estrutura</td>
+         <td class="num">${fmtP(somaL)}</td><td class="num">${fmtP(somaC)}</td></tr>`;
+  }
+}
+
+function renderAjustes(qual, tabela){
+  const lista = cenario.ajustes[qual];
+  const corpo = document.querySelector(tabela+" tbody");
+  if(!lista.length){
+    corpo.innerHTML = `<tr><td colspan="6" class="vazio">Nenhum ajuste avulso.</td></tr>`;
+    return;
+  }
+  corpo.innerHTML = lista.map((l,i)=>{
+    const c = refCargo(l.codigo) || CARGOS[0];
+    const tot = (Number(l.qtd)||0) * c.pontos;
+    return `<tr data-i="${i}">
+      <td><select data-campo="codigo">${CODIGOS_CARGO.map(codigo=>`<option value="${codigo}" ${codigo===l.codigo?"selected":""}>${codigo}</option>`).join("")}</select></td>
+      <td><input type="number" min="0" step="1" value="${l.qtd}" data-campo="qtd"></td>
+      <td class="num">${fmtM(c.remuneracao)}</td>
+      <td class="num">${fmtP(c.pontos)}</td>
+      <td class="num"><b>${fmtP(tot)}</b></td>
+      <td><button type="button" class="rm-aj" style="border:1px solid var(--linha);background:#fff;color:var(--carimbo);padding:4px 8px;font-size:.75rem;cursor:pointer;border-radius:2px;font-family:inherit;">remover</button></td>
+    </tr>`;
+  }).join("")
+  + `<tr class="total"><td colspan="4">Total ${qual==="ext"?"liberado":"consumido"} em ajustes avulsos</td>
+     <td class="num">${fmtP(totalAjustes(lista))}</td><td></td></tr>`;
+
+  corpo.querySelectorAll("tr[data-i]").forEach(tr=>{
+    const i = +tr.dataset.i;
+    tr.querySelectorAll("[data-campo]").forEach(el=>{
+      el.addEventListener("change", ev=>{
+        if(el.dataset.campo==="qtd") lista[i].qtd = Math.max(0, Math.floor(Number(ev.target.value||0)) || 0);
+        else lista[i].codigo = ev.target.value;
+        renderPontos(); renderPainelFixo(); guardar();
+      });
+    });
+    tr.querySelector(".rm-aj").addEventListener("click", ()=>{
+      lista.splice(i,1); renderPontos(); renderPainelFixo(); guardar();
+    });
+  });
+}
+
+function renderReferencia(){
+  $("#tabRef tbody").innerHTML = CODIGOS_CARGO.map(codigo=>{
+    const c=refCargo(codigo);
+    return `<tr><td>${codigo}</td><td class="num">${fmtM(c.remuneracao)}</td><td class="num">${fmtP(c.pontos)}</td></tr>`;
+  }).join("");
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   ABA 3 — REGIMENTO
+   ══════════════════════════════════════════════════════════════════════ */
+
+function travada(u){ return u.tipo==="DIR" && !cenario.decretoEditavel; }
+function preenchida(u){
+  if(travada(u)) return true;
+  return u.comp.caput.trim().length>0 || u.comp.incisos.some(i=>i.trim().length>0);
+}
+function primeiraPalavra(txt){
+  const m = txt.trim().toLowerCase().match(/^([a-záéíóúâêôãõç-]+)/);
+  return m ? m[1] : "";
+}
+function analisarInciso(txt, tipo){
+  const v = primeiraPalavra(txt);
+  if(!v) return null;
+  if(VERBOS_EVITAR.includes(v))
+    return {classe:"alerta", msg:`Sugestão: evitar "${v}" — é verbo de objetivo institucional, não de competência de unidade (Manual de Estruturas/SEGES). O preenchimento não é bloqueado.`};
+  if(!/(ar|er|ir|or)$/.test(v))
+    return {classe:"alerta", msg:`Sugestão: iniciar o inciso com verbo no infinitivo (AR/ER/IR). "${v}" não parece infinitivo.`};
+  if(!VERBOS[tipo].includes(v))
+    return {classe:"alerta", msg:`Aviso: "${v}" não consta da lista de referência do nível ${TIPOS[tipo].nivel}. Verifique a adequação — o uso é permitido.`};
+  return {classe:"ok", msg:`Verbo "${v}" compatível com o nível ${TIPOS[tipo].nivel}.`};
+}
+function textoVigenteHtml(u){
+  if(!u.base) return "<em>Unidade nova — não há texto vigente.</em>";
+  const t = (u.base.competenciaSiorg||"").trim();
+  if(!t || t===".") return "<em>Competência não informada na exportação do SIORG. Consulte o RI SPUv2.</em>";
+  return esc(t).replace(/\s+(?=[IVXLCDM]+\s+-\s)/g,"\n\n");
+}
+
+function renderNavReg(){
+  const lista = arvoreOrdenada().filter(x=>!x.u.extinta);
+  if(selecionadoReg && !lista.some(x=>x.u.id===selecionadoReg)) selecionadoReg = null;
+  if(!selecionadoReg && lista.length) selecionadoReg = lista[0].u.id;
+
+  $("#navReg").innerHTML = lista.map(({u, nivel})=>{
+    const ok = preenchida(u);
+    const st = travada(u)
+      ? '<span class="st travado" title="Competência fixada pelo decreto">🔒</span>'
+      : `<span class="st ${ok?"ok":"vazio"}">${ok?"✔":"—"}</span>`;
+    return `<button type="button" class="no ${u.id===selecionadoReg?"ativo":""}" data-u="${u.id}"
+        style="padding-left:${14 + nivel*16}px">
+      <span class="tipo ${u.tipo}">${u.tipo}</span>
+      <span class="nome">${esc(u.nome || "(sem denominação)")}</span>${st}</button>`;
+  }).join("");
+  $("#navReg").querySelectorAll("button[data-u]").forEach(b=>{
+    b.addEventListener("click", ()=>{ selecionadoReg = b.dataset.u; renderNavReg(); renderEditorReg(); });
+  });
+
+  const editaveis = lista.filter(x=>!travada(x.u));
+  const feitas = editaveis.filter(x=>preenchida(x.u)).length;
+  $("#progTexto").textContent = `Competências redigidas: ${feitas} de ${editaveis.length}`;
+  $("#progBarra").style.width = (editaveis.length ? Math.round(100*feitas/editaveis.length) : 0) + "%";
+}
+
+function renderEditorReg(){
+  const sec = $("#editorReg");
+  const u = selecionadoReg ? acharU(selecionadoReg) : null;
+  if(!u){ sec.innerHTML = `<div class="painel"><p class="vazio">Nenhuma unidade na estrutura proposta.</p></div>`; return; }
+  const e = u.comp;
+  const lim = TIPOS[u.tipo].limite;
+
+  const painelAtual = `<div class="painel leitura"><h3>Como está hoje</h3>
+    <div class="texto-atual">${textoVigenteHtml(u)}</div></div>`;
+
+  let painelProposta;
+  if(travada(u)){
+    painelProposta = `<div class="painel"><h3>Proposta</h3>
+      <div class="aviso trava">As competências de Diretoria derivam do decreto e não podem ser alteradas por regimento interno.
+        Se esta transição também altera o decreto, marque a opção no alto desta aba para liberar a edição.</div>
+      <label class="campo" for="cObs">Observações</label>
+      <textarea id="cObs" rows="3">${esc(e.obs)}</textarea></div>`;
+  } else {
+    const podeAdd = e.incisos.length < lim;
+    const incisosHtml = e.incisos.map((txt,i)=>{
+      const num = ROMANOS[i] || (i+1);
+      const an = analisarInciso(txt, u.tipo);
+      const av = (txt.trim() && an) ? `<div class="aviso ${an.classe}">${esc(an.msg)}</div>` : "";
+      return `<div class="inciso"><span class="num-i">${num} –</span>
+        <div style="flex:1"><textarea data-inciso="${i}" rows="2" aria-label="Inciso ${num}">${esc(txt)}</textarea>${av}</div>
+        <button class="rm" type="button" data-rm="${i}" aria-label="Remover inciso ${num}">×</button></div>`;
+    }).join("");
+
+    painelProposta = `<div class="painel"><h3>Proposta</h3>
+      <label class="campo" for="cCaput">Caput do artigo</label>
+      <textarea id="cCaput" rows="2">${esc(e.caput)}</textarea>
+      <div class="dica">Redação sucinta no caput, detalhada em incisos — ou artigo único, sem incisos.
+        A denominação é editada na aba Estrutura.</div>
+      <label class="campo">Incisos (${e.incisos.length} de até ${lim})</label>
+      ${incisosHtml || '<div class="dica">Nenhum inciso. Adicione abaixo ou redija tudo no caput.</div>'}
+      <button class="add" type="button" id="btAddInc" ${podeAdd?"":"disabled"}>+ Adicionar inciso</button>
+      ${podeAdd ? "" : `<div class="aviso alerta">Limite de ${lim} incisos para o nível ${TIPOS[u.tipo].nivel}.</div>`}
+      <label class="campo" for="cObs">Observações</label>
+      <textarea id="cObs" rows="2">${esc(e.obs)}</textarea>
+      <div class="verbos"><b>Verbos sugeridos — nível ${TIPOS[u.tipo].nivel} (orientação, não trava):</b>
+        ${VERBOS[u.tipo].join(", ")}.<br><b>Evitar:</b> ${VERBOS_EVITAR.join(", ")}.</div></div>`;
+  }
+
+  const mudouNome = u.base && u.nome.trim() !== u.base.nome;
+  sec.innerHTML = `<div class="cab-unidade">
+      <h2>${esc(u.nome || "(sem denominação)")}</h2>
+      <div class="meta">
+        ${u.sigla ? "Sigla: <b>"+esc(u.sigla)+"</b> · " : ""}
+        ${u.siorg ? "Siorg: "+esc(u.siorg)+" · " : ""}
+        ${esc(TIPOS[u.tipo].rotulo)} · Cargos/funções: <b>${esc(cargosTexto(u))}</b>
+        ${mudouNome ? '<br>Denominação atual: '+esc(u.base.nome) : ""}
+        ${!u.base ? '<br><b>Unidade nova nesta proposta.</b>' : ""}
+      </div></div>
+    <div class="colunas">${painelAtual}${painelProposta}</div>`;
+
+  const cObs = $("#cObs");
+  if(cObs) cObs.addEventListener("input", ev=>{ e.obs = ev.target.value; guardar(); });
+  if(!travada(u)){
+    $("#cCaput").addEventListener("input", ev=>{ e.caput = ev.target.value; renderNavReg(); guardar(); });
+    sec.querySelectorAll("textarea[data-inciso]").forEach(t=>{
+      t.addEventListener("change", ev=>{ e.incisos[+ev.target.dataset.inciso] = ev.target.value; renderNavReg(); renderEditorReg(); guardar(); });
+    });
+    sec.querySelectorAll("button[data-rm]").forEach(b=>{
+      b.addEventListener("click", ev=>{ e.incisos.splice(+ev.currentTarget.dataset.rm,1); renderNavReg(); renderEditorReg(); guardar(); });
+    });
+    const add = $("#btAddInc");
+    if(add) add.addEventListener("click", ()=>{ e.incisos.push(""); renderEditorReg(); guardar(); });
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   ABA 4 — QUADRO COMPARATIVO
+   ══════════════════════════════════════════════════════════════════════ */
+
+function situacao(u){
+  if(!u.base) return u.extinta ? "excluída" : "criada";
+  if(u.extinta) return "extinta";
+  const mudancas = [];
+  if(u.nome.trim() !== u.base.nome) mudancas.push("renomeada");
+  if(JSON.stringify(u.cargos) !== JSON.stringify(u.base.cargos)) mudancas.push("cargos alterados");
+  if((u.pai||"") !== (u.base.pai||"")) mudancas.push("remanejada");
+  if(u.tipo !== u.base.tipo) mudancas.push("natureza alterada");
+  return mudancas.length ? mudancas.join(", ") : "mantida";
+}
+function categoriaMudanca(u){
+  if(!u.base) return u.extinta ? "excluidas" : "criadas";
+  if(u.extinta) return "excluidas";
+  if((u.pai||"") !== (u.base.pai||"")) return "remanejadas";
+  return situacao(u)==="mantida" ? "mantidas" : "alteradas";
+}
+function nomeDe(id){
+  if(!id) return "— primeiro nível —";
+  const u = acharU(id);
+  return u ? (u.nome || u.sigla || id) : "(unidade inexistente)";
+}
+
+function renderComparativo(){
+  const linhas = arvoreOrdenada();
+  const cont = {alteradas:0, remanejadas:0, criadas:0, excluidas:0};
+  linhas.forEach(({u})=>{const c=categoriaMudanca(u); if(cont[c]!==undefined) cont[c]++;});
+  $("#resumoCmp").innerHTML = `
+    <button type="button" class="r filtro ${filtroComparativo==="alteradas"?"ativo":""}" data-filtro-cmp="alteradas"><div class="rot">Unidades alteradas</div><div class="val">${cont.alteradas}</div></button>
+    <button type="button" class="r filtro ${filtroComparativo==="remanejadas"?"ativo":""}" data-filtro-cmp="remanejadas"><div class="rot">Unidades remanejadas</div><div class="val">${cont.remanejadas}</div></button>
+    <button type="button" class="r filtro ${filtroComparativo==="criadas"?"ativo":""}" data-filtro-cmp="criadas"><div class="rot">Unidades criadas</div><div class="val">${cont.criadas}</div></button>
+    <button type="button" class="r filtro ${filtroComparativo==="excluidas"?"ativo":""}" data-filtro-cmp="excluidas"><div class="rot">Unidades excluídas</div><div class="val">${cont.excluidas}</div></button>`;
+
+  const filtradas=filtroComparativo==="todas"?linhas:linhas.filter(({u})=>categoriaMudanca(u)===filtroComparativo);
+  $("#tabCmp tbody").innerHTML = filtradas.map(({u})=>{
+    const s = situacao(u);
+    const mudou = s !== "mantida";
+    return `<tr class="cmp-linha ${mudou?"mudou":""}">
+      <td>${esc(s)}</td>
+      <td class="cmp-antes">${u.base ? esc(u.base.nome) : "—"}</td>
+      <td class="cmp-antes">${u.base ? esc(cargosTexto(u.base)) : "—"}</td>
+      <td class="cmp-depois">${u.extinta ? "—" : esc(u.nome || "(sem denominação)")}</td>
+      <td class="cmp-depois">${u.extinta ? "—" : esc(cargosTexto(u))}</td>
+      <td>${u.extinta ? "—" : esc(nomeDe(u.pai))}</td>
+    </tr>`;
+  }).join("") || '<tr><td colspan="6" class="vazio">Nenhuma unidade neste filtro.</td></tr>';
+  $$('[data-filtro-cmp]').forEach(b=>b.addEventListener("click",()=>{ filtroComparativo=filtroComparativo===b.dataset.filtroCmp?"todas":b.dataset.filtroCmp; renderComparativo(); }));
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   PERSISTÊNCIA E EXPORTAÇÕES
+   ══════════════════════════════════════════════════════════════════════ */
+
+function avisar(msg){
+  const t = $("#toast");
+  t.textContent = msg; t.style.display = "block";
+  clearTimeout(avisar._t);
+  avisar._t = setTimeout(()=>{ t.style.display = "none"; }, 2600);
+}
+
+function guardar(){
+  cenario.atualizadoEm = new Date().toISOString();
+  try{
+    localStorage.setItem(CHAVE_LOCAL, JSON.stringify(cenario));
+    $("#autosave").textContent = "guardado neste navegador às " +
+      new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+  }catch(err){
+    $("#autosave").textContent = "não foi possível guardar neste navegador — exporte o .json";
+  }
+}
+
+function recuperar(){
+  try{
+    const bruto = localStorage.getItem(CHAVE_LOCAL);
+    if(!bruto) return null;
+    const d = JSON.parse(bruto);
+    return (d && Array.isArray(d.unidades)) ? prepararCenario(d) : null;
+  }catch(err){ return null; }
+}
+
+function baixar(nome, conteudo, tipo){
+  const blob = new Blob([conteudo], {type:tipo});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = nome;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+}
+const carimbo = () => new Date().toISOString().slice(0,10);
+const limpaNome = s => (s||"cenario").normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-zA-Z0-9]+/g,"_").slice(0,40);
+
+function exportarJson(){
+  baixar("backup_desenho_"+limpaNome(cenario.nome)+"_"+carimbo()+".json",
+    JSON.stringify(cenario, null, 2), "application/json");
+  avisar("Backup do protótipo exportado.");
+}
+
+function importarJson(arquivo){
+  const r = new FileReader();
+  r.onload = ()=>{
+    try{
+      const d = JSON.parse(r.result);
+      if(!d || !Array.isArray(d.unidades)) throw new Error("o arquivo não tem a lista de unidades.");
+      d.unidades.forEach(u=>{
+        u.comp = u.comp || {caput:"", incisos:[], obs:""};
+        u.comp.incisos = Array.isArray(u.comp.incisos) ? u.comp.incisos : [];
+        u.extinta = !!u.extinta;
+        if(!Array.isArray(u.cargos)){
+          u.cargos=[{id:`${u.id}:1`,codigo:u.cargo||TIPOS[u.tipo]?.cargoSugerido||"FCE 1.05",titulo:u.cargoTitulo||"Titular da unidade",quantidade:1,principal:true,fonte:"cenário importado"}];
+        }
+        if(u.base && !Array.isArray(u.base.cargos)) u.base.cargos=structuredClone(u.cargos);
+      });
+      d.ajustes = d.ajustes || {ext:[], cri:[]};
+      d.ajustes.ext = d.ajustes.ext || []; d.ajustes.cri = d.ajustes.cri || [];
+      cenario = prepararCenario(d);
+      selecionadoReg = null;
+      renderTudo();
+      avisar("Backup restaurado.");
+    }catch(err){ alert("Não foi possível carregar: " + err.message); }
+  };
+  r.readAsText(arquivo);
+}
+
+function exportarCsv(){
+  const sep = ";";
+  const l = [];
+  l.push("DEMONSTRATIVO DE PONTOS — " + cenario.nome);
+  l.push("Gerado em " + new Date().toLocaleString("pt-BR"));
+  l.push("");
+  l.push(["Bloco","Origem","Movimento","Cargo","Quantidade","Pontos liberados","Pontos consumidos"].join(sep));
+  movimentos().forEach(m=>{
+    l.push(["Estrutura", m.origem, m.mov, m.cargo, m.qtd||1, m.lib?fmtP(m.lib):"", m.con?fmtP(m.con):""].join(sep));
+  });
+  const t = totais();
+  l.push("");
+  l.push(["Total liberado", fmtP(t.lib)].join(sep));
+  l.push(["Total consumido", fmtP(t.con)].join(sep));
+  l.push(["Saldo remanescente", fmtP(t.saldo)].join(sep));
+  l.push("");
+  const a = contagem("atual"), p = contagem("proposta");
+  l.push(["Silhueta","Atual","Proposta","Diferença"].join(sep));
+  TIPOS_SILHUETA.forEach(tp=> l.push([TIPOS[tp].rotulo, a[tp], p[tp], (p[tp]-a[tp]>0?"+":"")+(p[tp]-a[tp])].join(sep)));
+  baixar("pontos_"+limpaNome(cenario.nome)+"_"+carimbo()+".csv", "﻿"+l.join("\n"), "text/csv;charset=utf-8;");
+  avisar("Demonstrativo exportado.");
+}
+
+function exportarRegimento(){
+  let out = "MINUTA DE COMPETÊNCIAS REGIMENTAIS\n" + cenario.nome + "\n";
+  out += "Gerado em " + new Date().toLocaleDateString("pt-BR") + "\n\n";
+  if(!cenario.decretoEditavel)
+    out += "[Competências de Diretoria não incluídas: derivam do decreto e não são alteradas por regimento interno.]\n\n";
+  arvoreOrdenada().filter(x=>!x.u.extinta).forEach(({u})=>{
+    if(travada(u)){
+      if(u.comp.obs.trim()) out += "["+ (u.nome||u.sigla) +" — observações: "+u.comp.obs.trim()+"]\n\n";
+      return;
+    }
+    if(!preenchida(u)) return;
+    out += (u.nome || "(sem denominação)") + (u.sigla ? " ("+u.sigla+")" : "") + "\n";
+    if(u.base && u.nome.trim() !== u.base.nome) out += "(denominação atual: " + u.base.nome + ")\n";
+    if(!u.base) out += "(unidade nova)\n";
+    out += "\n" + (u.comp.caput.trim() || "[caput não redigido]") + "\n";
+    u.comp.incisos.filter(i=>i.trim()).forEach((inc,i)=>{ out += "\n" + (ROMANOS[i]||(i+1)) + " - " + inc.trim(); });
+    if(u.comp.obs.trim()) out += "\n\nObservações: " + u.comp.obs.trim();
+    out += "\n\n" + "—".repeat(46) + "\n\n";
+  });
+  const extintas = cenario.unidades.filter(u=>u.base && u.extinta);
+  if(extintas.length){
+    out += "UNIDADES EXTINTAS NESTA PROPOSTA\n\n";
+    extintas.forEach(u=>{ out += "· " + u.base.nome + " (" + cargosTexto(u.base) + ")\n"; });
+  }
+  baixar("regimento_"+limpaNome(cenario.nome)+"_"+carimbo()+".txt", out, "text/plain;charset=utf-8");
+  avisar("Minuta exportada.");
+}
+
+function exportarComparativo(){
+  const t = totais(), a = contagem("atual"), p = contagem("proposta");
+  let out = "QUADRO COMPARATIVO — SITUAÇÃO ATUAL × PROPOSTA\n" + cenario.nome + "\n";
+  out += "Gerado em " + new Date().toLocaleDateString("pt-BR") + "\n\n";
+  out += "SILHUETA\n";
+  TIPOS_SILHUETA.forEach(tp=>{
+    const d = p[tp]-a[tp];
+    out += "  " + TIPOS[tp].rotulo.padEnd(20) + a[tp] + " → " + p[tp] + (d?"  ("+(d>0?"+":"")+d+")":"") + "\n";
+  });
+  out += "\nPONTOS\n";
+  out += "  Liberados:  " + fmtP(t.lib) + "\n  Consumidos: " + fmtP(t.con) + "\n  Saldo:      " + fmtP(t.saldo) + "\n";
+  out += "\nUNIDADE A UNIDADE\n\n";
+  arvoreOrdenada().forEach(({u})=>{
+    const s = situacao(u);
+    out += "· [" + s + "] " + (u.base ? u.base.nome : "(nova)") + "\n";
+    if(u.base && !u.extinta){
+      if(u.nome.trim() !== u.base.nome) out += "    denominação: " + u.base.nome + " → " + u.nome + "\n";
+      if(JSON.stringify(u.cargos)!==JSON.stringify(u.base.cargos)) out += "    cargos: " + cargosTexto(u.base) + " → " + cargosTexto(u) + "\n";
+      if((u.pai||"") !== (u.base.pai||"")) out += "    subordinação: " + nomeDe(u.base.pai) + " → " + nomeDe(u.pai) + "\n";
+      if(u.tipo !== u.base.tipo)        out += "    natureza: " + TIPOS[u.base.tipo].rotulo + " → " + TIPOS[u.tipo].rotulo + "\n";
+    }
+    if(!u.base && !u.extinta){
+      out += "    denominação: " + (u.nome||"(sem denominação)") + "\n";
+      out += "    cargos: " + cargosTexto(u) + " · subordinação: " + nomeDe(u.pai) + "\n";
+    }
+    if(u.base && u.extinta) out += "    cargos liberados: " + cargosTexto(u.base) + "\n";
+  });
+  baixar("comparativo_"+limpaNome(cenario.nome)+"_"+carimbo()+".txt", out, "text/plain;charset=utf-8");
+  avisar("Quadro comparativo exportado.");
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   ABAS, EVENTOS E PARTIDA
+   ══════════════════════════════════════════════════════════════════════ */
+
+function registrarHistorico(tipo,texto,unidadeId=null,extra={}){
+  cenario.historico.push({id:`evento_${Date.now()}_${Math.random().toString(36).slice(2,6)}`,tipo,data:new Date().toISOString(),texto,unidadeId,...extra});
+}
+
+function dataHora(iso){
+  return new Date(iso).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"});
+}
+function dataProjeto(iso){
+  return new Date(iso).toLocaleDateString("pt-BR");
+}
+function adicionarNotaGeral(){
+  const texto=$("#textoNotaGeral").value.trim(); if(!texto) return;
+  cenario.projeto.notas.push({id:`nota_${Date.now()}`,data:new Date().toISOString(),texto,unidadeId:null});
+  $("#textoNotaGeral").value=""; renderNotasHistorico(); guardar();
+}
+
+function abrirUnidadeDaNota(id){
+  const u=acharU(id); if(!u) return;
+  selecionadoEstrutura=id; filtroEstrutura=""; $("#buscaEstrutura").value=""; abertos.clear();
+  let atual=u; while(atual){ abertos.add(atual.id); atual=atual.pai?acharU(atual.pai):null; }
+  let topo=u; while(topo.pai&&topo.pai!=="1986"){ const pai=acharU(topo.pai); if(!pai) break; topo=pai; }
+  if(u.id==="1986"||topo.tipo==="GAB") abertos.add("macro-secretaria");
+  else if(topo.tipo==="DIR") abertos.add(`macro-diretoria-${topo.id}`);
+  else if(topo.tipo==="SUP") abertos.add("macro-superintendencias");
+  else abertos.add(`macro-direta-${topo.id}`);
+  document.querySelector('[data-aba="estrutura"]').click(); renderArvore();
+}
+
+function renderNotasHistorico(){
+  $("#notasGerais").innerHTML=[...(cenario.projeto.notas||[])].reverse().map(n=>`<div class="nota-item"><p>${esc(n.texto)}</p><div class="linha-nota"><small>${dataHora(n.data)}</small><button type="button" class="perigo" data-remover-nota-geral="${n.id}">remover</button></div></div>`).join("")||'<p class="vazio">Nenhuma nota geral.</p>';
+  $("#historicoProjeto").innerHTML=[...cenario.historico].sort((a,b)=>new Date(b.data)-new Date(a.data)).map(e=>`<div class="evento"><div><span class="tipo-nota">${esc(e.tipo)}</span><time>${dataHora(e.data)}</time></div><p>${esc(e.texto)}</p></div>`).join("")||'<p class="vazio">O histórico aparecerá aqui.</p>';
+  const unidadesComNotas=cenario.unidades.filter(u=>(u.notas||[]).length).sort((a,b)=>a.nome.localeCompare(b.nome,"pt-BR"));
+  const totalNotas=unidadesComNotas.reduce((s,u)=>s+u.notas.length,0);
+  $("#resumoNotasUnidades").textContent=totalNotas?`${totalNotas} nota(s) distribuída(s) em ${unidadesComNotas.length} unidade(s).`:"Nenhuma nota vinculada a unidade.";
+  $("#notasPorUnidade").innerHTML=unidadesComNotas.map(u=>`<section class="grupo-notas-unidade"><div><div><b>${esc(u.nome)}</b>${u.sigla?` <span>(${esc(u.sigla)})</span>`:""}${u.extinta?' <span class="chip ext">extinta</span>':""}</div><button type="button" class="botao-secundario" data-abrir-unidade-nota="${u.id}">Abrir unidade</button></div><div class="conteudo-notas">${[...u.notas].reverse().map(n=>`<div class="nota-item"><p>${esc(n.texto)}</p><small>${dataHora(n.data)}</small></div>`).join("")}</div></section>`).join("")||'<p class="vazio">As notas adicionadas nas unidades aparecerão aqui.</p>';
+  $$('[data-remover-nota-geral]').forEach(b=>b.addEventListener("click",()=>{ cenario.projeto.notas=cenario.projeto.notas.filter(n=>n.id!==b.dataset.removerNotaGeral); renderNotasHistorico(); guardar(); }));
+  $$('[data-abrir-unidade-nota]').forEach(b=>b.addEventListener("click",()=>abrirUnidadeDaNota(b.dataset.abrirUnidadeNota)));
+}
+
+function mostrarTela(id){
+  ["telaInicio","telaProjeto","telaSimulador","telaRegimento","telaConsulta"].forEach(x=>$("#"+x).classList.toggle("oculta",x!==id));
+  if(id==="telaInicio") renderInicio();
+}
+
+function renderInicio(){
+  $("#inicioProjetoNome").textContent=`Proposta de Desenho Organizacional — ${dataProjeto(cenario.projeto.abertoEm)}${cenario.projeto.subtitulo?` · ${cenario.projeto.subtitulo}`:""}`;
+  $("#inicioProjetoEstado").textContent=cenario.projeto.estado;
+  $("#inicioProjetoPrazo").textContent=cenario.projeto.prazo?new Date(cenario.projeto.prazo+"T12:00:00").toLocaleDateString("pt-BR"):"Não informado";
+  $("#inicioProjetoCenario").textContent=cenario.nome;
+}
+
+function arvoreConsulta(u){
+  if(!u || u.extinta) return "";
+  const subs=cenario.unidades.filter(x=>x.pai===u.id&&!x.extinta).sort((a,b)=>a.nome.localeCompare(b.nome,"pt-BR"));
+  const obs=u.divulgarObservacao&&u.observacaoPublica?`<p class="obs-publica">${esc(u.observacaoPublica)}</p>`:"";
+  return `<details open><summary><strong>${esc(u.nome)}</strong>${u.sigla?` <span>(${esc(u.sigla)})</span>`:""}</summary><div class="unidade-publica"><p><b>Subordinação:</b> ${esc(nomeDe(u.pai))}</p>${obs}${subs.length?`<div class="ramo-publico">${subs.map(arvoreConsulta).join("")}</div>`:""}</div></details>`;
+}
+
+function renderConsulta(){
+  const atual=cenario.unidades.filter(u=>u.base&&!u.base.extinta).length, proposta=cenario.unidades.filter(u=>!u.extinta).length;
+  const cont={alteradas:0,remanejadas:0,criadas:0,excluidas:0};
+  cenario.unidades.forEach(u=>{const c=categoriaMudanca(u);if(cont[c]!==undefined)cont[c]++;});
+  const cargosAtuais={}, cargosPropostos={};
+  cenario.unidades.filter(u=>u.base).flatMap(u=>u.base.cargos||[]).forEach(c=>{cargosAtuais[c.codigo]=(cargosAtuais[c.codigo]||0)+(Number(c.quantidade)||1);});
+  cenario.unidades.filter(u=>!u.extinta).flatMap(u=>u.cargos||[]).forEach(c=>{cargosPropostos[c.codigo]=(cargosPropostos[c.codigo]||0)+(Number(c.quantidade)||1);});
+  const codigos=[...new Set([...Object.keys(cargosAtuais),...Object.keys(cargosPropostos)])].sort((a,b)=>a.localeCompare(b,"pt-BR",{numeric:true}));
+  const tabelaCargos=codigos.map(codigo=>{const a=cargosAtuais[codigo]||0,p=cargosPropostos[codigo]||0,d=p-a,classe=d>0?"variacao-positiva":d<0?"variacao-negativa":"";return `<tr class="${classe}"><td>${esc(codigo)}</td><td class="num">${a}</td><td class="num">${p}</td><td class="num">${d>0?"+":""}${d}</td></tr>`;}).join("");
+  const totalCargosAtual=Object.values(cargosAtuais).reduce((s,n)=>s+n,0), totalCargosProposta=Object.values(cargosPropostos).reduce((s,n)=>s+n,0), variacaoCargos=totalCargosProposta-totalCargosAtual;
+  const nomeAtual=id=>{const u=cenario.unidades.find(x=>x.id===id); return u?.base?.nome||u?.nome||"—";};
+  function ordenar(qual){
+    const lista=qual==="atual"?cenario.unidades.filter(u=>u.base).map(u=>({...u.base,_modelo:u})):cenario.unidades.filter(u=>!u.extinta).map(u=>({...u,_modelo:u}));
+    const ids=new Set(lista.map(u=>u.id)), porPai={};
+    lista.forEach(u=>{const p=u.pai&&ids.has(u.pai)?u.pai:"__raiz__";(porPai[p]=porPai[p]||[]).push(u);});
+    Object.values(porPai).forEach(v=>v.sort((a,b)=>a.nome.localeCompare(b.nome,"pt-BR")));
+    const saida=[]; const visitar=(u,nivel)=>{saida.push({u,nivel});(porPai[u.id]||[]).forEach(f=>visitar(f,nivel+1));};
+    (porPai.__raiz__||[]).forEach(u=>visitar(u,0)); return saida;
+  }
+  function linhasTabela(qual){
+    const registros=ordenar(qual).filter(({u})=>filtroConsulta==="todas"||categoriaMudanca(u._modelo)===filtroConsulta);
+    return registros.map(({u,nivel})=>{
+      const modelo=u._modelo, s=situacao(modelo);
+      const classe=qual==="atual"?(modelo.extinta?"status-extinta":s!=="mantida"?"status-alterada":"") : (!modelo.base?"status-criada":s!=="mantida"?"status-alterada":"");
+      const rotulo=qual==="atual"?(modelo.extinta?"Excluída":s!=="mantida"?s:"Sem alteração") : (!modelo.base?"Criada":s!=="mantida"?s:"Sem alteração");
+      const subordinacao=qual==="atual"?nomeAtual(u.pai):nomeDe(u.pai);
+      return `<tr class="${classe}"><td style="padding-left:${8+nivel*13}px"><b>${esc(u.nome)}</b><span class="unidade-nivel">${esc(TIPOS[u.tipo]?.rotulo||u.tipo)}</span></td><td>${esc(u.sigla||"—")}</td><td>${esc(subordinacao)}</td><td>${rotulo}</td></tr>`;
+    }).join("")||'<tr><td colspan="4" class="vazio">Nenhuma unidade neste filtro.</td></tr>';
+  }
+  $("#consultaConteudo").innerHTML=`<div class="aviso-prototipo">Prévia local — esta versão ainda não foi publicada.</div><div class="consulta-topo"><div><span class="rotulo-miudo">Proposta de desenho organizacional</span><h2>Proposta de Desenho Organizacional — ${dataProjeto(cenario.projeto.abertoEm)}</h2>${cenario.projeto.subtitulo?`<p><b>${esc(cenario.projeto.subtitulo)}</b></p>`:""}<p>${esc(cenario.nome)} · estado: ${esc(cenario.projeto.estado)}</p></div><button class="botao-secundario" type="button" onclick="window.print()">Imprimir / salvar em PDF</button></div>
+    <div class="resumo-publico">
+      <button type="button" class="${filtroConsulta==="alteradas"?"ativo":""}" data-filtro-consulta="alteradas"><b>${cont.alteradas}</b><span>unidades alteradas</span></button>
+      <button type="button" class="${filtroConsulta==="remanejadas"?"ativo":""}" data-filtro-consulta="remanejadas"><b>${cont.remanejadas}</b><span>unidades remanejadas</span></button>
+      <button type="button" class="${filtroConsulta==="criadas"?"ativo":""}" data-filtro-consulta="criadas"><b>${cont.criadas}</b><span>unidades criadas</span></button>
+      <button type="button" class="${filtroConsulta==="excluidas"?"ativo":""}" data-filtro-consulta="excluidas"><b>${cont.excluidas}</b><span>unidades excluídas</span></button>
+    </div>
+    <section class="bloco-consulta"><h3>Comparação da estrutura</h3><div class="legenda-comparacao"><span><i class="l-extinta"></i> excluída da estrutura atual</span><span><i class="l-alterada"></i> alterada</span><span><i class="l-criada"></i> criada na proposta</span></div>
+      <div class="comparacao-publica-grid">
+        <div class="quadro-publico"><h3>Como está hoje</h3><div class="rolagem"><table class="tabela-estrutura-publica"><thead><tr><th>Unidade</th><th>Sigla</th><th>Subordinação</th><th>Situação</th></tr></thead><tbody>${linhasTabela("atual")}</tbody></table></div></div>
+        <div class="quadro-publico"><h3>Estrutura proposta</h3><div class="rolagem"><table class="tabela-estrutura-publica"><thead><tr><th>Unidade</th><th>Sigla</th><th>Subordinação</th><th>Situação</th></tr></thead><tbody>${linhasTabela("proposta")}</tbody></table></div></div>
+      </div></section>
+    <section class="bloco-consulta"><h3>Comparativo do total de cargos</h3>
+      <div class="resumo-cargos-publico"><div><b>${totalCargosAtual}</b><span>cargos atuais</span></div><div><b>${totalCargosProposta}</b><span>cargos propostos</span></div><div class="${variacaoCargos>0?"variacao-positiva":variacaoCargos<0?"variacao-negativa":""}"><b>${variacaoCargos>0?"+":""}${variacaoCargos}</b><span>variação total</span></div></div>
+      <table class="tabela-cargos-publica"><thead><tr><th>Código</th><th class="num">Atual</th><th class="num">Proposta</th><th class="num">Diferença</th></tr></thead><tbody>${tabelaCargos}</tbody></table></section>`;
+  $$('[data-filtro-consulta]').forEach(b=>b.addEventListener("click",()=>{filtroConsulta=filtroConsulta===b.dataset.filtroConsulta?"todas":b.dataset.filtroConsulta;renderConsulta();}));
+}
+
+function abrirVinculoModulos(direcao){
+  direcaoVinculo=direcao;
+  if(direcao==="desenho-regimento"){
+    $("#tituloVinculoModulos").textContent="Criar Regimento Interno a partir deste desenho";
+    $("#textoVinculoModulos").innerHTML="<p>O protótipo vinculará o regimento à versão atual do desenho. Denominações, siglas e subordinações formarão o esqueleto dos artigos; unidades novas ficarão sem competências e unidades existentes poderão reaproveitar o texto vigente.</p><p><b>Nesta etapa visual, o vínculo será registrado e o módulo de Regimento será aberto. A geração integral dos artigos será implementada depois da validação deste fluxo.</b></p>";
+  }else{
+    $("#tituloVinculoModulos").textContent="Criar desenho organizacional a partir deste regimento";
+    $("#textoVinculoModulos").innerHTML="<p>O desenho será aberto para conferir as alterações estruturais do regimento: criação, extinção, denominação, sigla e subordinação.</p><p>Unidades novas precisarão receber um cargo CCE/FCE 1.xx antes de entrarem na proposta. Nenhuma alteração será aplicada silenciosamente.</p>";
+  }
+  $("#dlgVinculoModulos").showModal();
+}
+
+function confirmarVinculoModulos(){
+  const agora=new Date().toISOString();
+  if(direcaoVinculo==="desenho-regimento"){
+    cenario.projeto.regimentoVinculadoEm=agora;
+    registrarHistorico("vínculo","Regimento Interno iniciado a partir deste desenho.");
+    mostrarTela("telaRegimento");
+  }else{
+    cenario.projeto.origemRegimentoEm=agora;
+    registrarHistorico("vínculo","Desenho aberto a partir do Regimento Interno para conferência estrutural.");
+    mostrarTela("telaProjeto");
+  }
+  renderVinculos(); guardar();
+}
+
+function renderVinculos(){
+  const reg=$("#vinculoRegimento");
+  reg.classList.toggle("oculta",!cenario.projeto.regimentoVinculadoEm);
+  if(cenario.projeto.regimentoVinculadoEm) reg.textContent=`Regimento vinculado à proposta de ${dataProjeto(cenario.projeto.abertoEm)}. A estrutura usada fica registrada nesta versão do projeto.`;
+  $("#vinculoProjeto").textContent=cenario.projeto.origemRegimentoEm?"Desenho iniciado a partir de um Regimento Interno — alterações estruturais aguardam conferência.":"Estrutura de referência congelada na abertura";
+}
+
+function renderTudo(){
+  $("#nomeCenario").value = cenario.nome;
+  $("#tituloProjeto").textContent=`Proposta de Desenho Organizacional — ${dataProjeto(cenario.projeto.abertoEm)}`;
+  $("#subtituloProjeto").value=cenario.projeto.subtitulo||"";
+  $("#prazoProjeto").value=cenario.projeto.prazo||""; $("#seiProjeto").value=cenario.projeto.processoSei||""; $("#estadoProjeto").value=cenario.projeto.estado;
+  $("#metaTipo").value=cenario.projeto.metaTipo||"livre"; $("#metaPontos").value=Number(cenario.projeto.metaPontos)||0; $("#metaPontos").disabled=cenario.projeto.metaTipo==="livre"||cenario.projeto.metaTipo==="manter";
+  $("#campoMetaPontos").classList.toggle("oculta",cenario.projeto.metaTipo==="livre"||cenario.projeto.metaTipo==="manter");
+  renderPainelFixo();
+  renderArvore();
+  renderPontos();
+  renderComparativo();
+  renderNotasHistorico();
+  renderVinculos();
+  renderInicio();
+  guardar();
+}
+
+$$(".abas button").forEach(b=>{
+  b.addEventListener("click", ()=>{
+    $$(".abas button").forEach(x=>x.classList.remove("ativa"));
+    $$(".aba").forEach(x=>x.classList.remove("ativa"));
+    b.classList.add("ativa");
+    $("#aba-"+b.dataset.aba).classList.add("ativa");
+  });
+});
+
+$("#nomeCenario").addEventListener("input", ev=>{ cenario.nome = ev.target.value; guardar(); });
+$("#subtituloProjeto").addEventListener("input",ev=>{ cenario.projeto.subtitulo=ev.target.value; renderInicio(); guardar(); });
+$("#prazoProjeto").addEventListener("change",ev=>{ cenario.projeto.prazo=ev.target.value; registrarHistorico("projeto",`Prazo definido para ${ev.target.value?new Date(ev.target.value+"T12:00:00").toLocaleDateString("pt-BR"):"não informado"}.`); renderTudo(); });
+$("#seiProjeto").addEventListener("change",ev=>{ cenario.projeto.processoSei=ev.target.value.trim(); guardar(); });
+$("#estadoProjeto").addEventListener("change",ev=>{ cenario.projeto.estado=ev.target.value; registrarHistorico("projeto",`Estado do projeto alterado para ${ev.target.value}.`); renderTudo(); });
+$("#metaTipo").addEventListener("change",ev=>{ cenario.projeto.metaTipo=ev.target.value; renderTudo(); });
+$("#metaPontos").addEventListener("input",ev=>{ cenario.projeto.metaPontos=Math.max(0,Number(ev.target.value)||0); renderPainelFixo(); guardar(); });
+$("#buscaEstrutura").addEventListener("input",ev=>{ filtroEstrutura=ev.target.value; abertos.clear(); renderArvore(); });
+$("#btLimparBusca").addEventListener("click",()=>{ filtroEstrutura=""; $("#buscaEstrutura").value=""; abertos.clear(); renderArvore(); });
+$("#btAbrirTodos").addEventListener("click",()=>{
+  filtroEstrutura=""; $("#buscaEstrutura").value=""; abertos.clear();
+  cenario.unidades.forEach(u=>abertos.add(u.id));
+  abertos.add("macro-secretaria");
+  cenario.unidades.filter(u=>u.pai==="1986"&&u.tipo==="DIR").forEach(u=>abertos.add(`macro-diretoria-${u.id}`));
+  cenario.unidades.filter(u=>u.pai==="1986"&&!["GAB","DIR","SUP"].includes(u.tipo)).forEach(u=>abertos.add(`macro-direta-${u.id}`));
+  abertos.add("macro-superintendencias"); renderArvore();
+});
+$("#btFecharTodos").addEventListener("click",()=>{ filtroEstrutura=""; $("#buscaEstrutura").value=""; abertos.clear(); renderArvore(); });
+$("#btNovaRaiz").addEventListener("click", ()=> abrirNovaUnidade("1986", "CG"));
+$("#btSalvar").addEventListener("click", exportarJson);
+$("#inAbrir").addEventListener("change", ev=>{ if(ev.target.files[0]) importarJson(ev.target.files[0]); ev.target.value=""; });
+$("#btCsv").addEventListener("click", exportarCsv);
+$("#btTxtCmp").addEventListener("click", exportarComparativo);
+$("#btPrevia").addEventListener("click",()=>{ renderConsulta(); mostrarTela("telaConsulta"); });
+$("#voltarProjetoConsulta").addEventListener("click",()=>mostrarTela("telaProjeto"));
+$("#btInicio").addEventListener("click",()=>mostrarTela("telaInicio"));
+$("#abrirProjeto").addEventListener("click",()=>mostrarTela("telaProjeto"));
+$("#atalhoEstrutura").addEventListener("click",()=>mostrarTela("telaProjeto"));
+$("#atalhoSimulador").addEventListener("click",()=>mostrarTela("telaSimulador"));
+$("#atalhoRegimento").addEventListener("click",()=>mostrarTela("telaRegimento"));
+$$('[data-voltar-inicio]').forEach(b=>b.addEventListener("click",()=>mostrarTela("telaInicio")));
+
+$("#formNovaUnidade").addEventListener("submit",ev=>{
+  if(ev.submitter?.value!=="default") return;
+  const nome=$("#novaNome").value.trim(); if(!nome){ ev.preventDefault(); $("#novaNome").focus(); return; }
+  criarUnidade(paiNovaUnidade,$("#novaTipo").value,$("#novaCargo").value,nome,$("#novaSigla").value.trim());
+});
+$("#btAdicionarNotaGeral").addEventListener("click",adicionarNotaGeral);
+$("#formVinculoModulos").addEventListener("submit",ev=>{ if(ev.submitter?.value==="confirmar") confirmarVinculoModulos(); });
+
+$("#btZerar").addEventListener("click", ()=>{
+  if(!confirm("Recomeçar do zero? O cenário guardado neste navegador é descartado. Exporte o .json antes, se quiser conservá-lo.")) return;
+  cenario = cenarioNovo(); selecionadoReg = null; selecionadoEstrutura=null; renderTudo(); avisar("Cenário reiniciado.");
+});
+
+renderReferencia();
+cenario = recuperar() || cenarioNovo();
+renderTudo();
+mostrarTela("telaInicio");
+</script>
+</body>
+</html>
