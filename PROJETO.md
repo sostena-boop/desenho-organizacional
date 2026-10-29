@@ -82,12 +82,16 @@ Verificado em navegador por servidor local:
 
 ## Próximos passos
 
-1. Publicar a versão validada no repositório pessoal e ativar o GitHub Pages.
-2. Conectar a interface às tabelas `desenho_*` já criadas no Supabase `spuprocessos`.
-3. Completar o gerenciamento de vários cenários e a escolha do cenário principal.
-4. Implementar validações de publicação e marcos/versionamento mais completos.
-5. Projetar a geração de DOCX para o projeto e para o esqueleto do regimento.
-6. Revisar as fontes e a vigência da tabela de cargos/pontos com SIORG e ato normativo.
+Publicação inicial concluída:
+
+- repositório: `https://github.com/sostena-boop/desenho-organizacional`;
+- GitHub Pages: `https://sostena-boop.github.io/desenho-organizacional/`.
+
+1. Conectar a interface às tabelas `desenho_*` já criadas no Supabase `spuprocessos`.
+2. Completar o gerenciamento de vários cenários e a escolha do cenário principal.
+3. Implementar validações de publicação e marcos/versionamento mais completos.
+4. Projetar a geração de DOCX para o projeto e para o esqueleto do regimento.
+5. Revisar as fontes e a vigência da tabela de cargos/pontos com SIORG e ato normativo.
 
 ## Fontes e arquivos relacionados
 

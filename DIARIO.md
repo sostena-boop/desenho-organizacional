@@ -86,3 +86,12 @@
 - Criadas no Supabase as tabelas `desenho_projetos`, `desenho_cenarios`, `desenho_revisoes` e `desenho_publicacoes`, todas com RLS. Dados privados usam propriedade por `auth.uid()`; consulta sem login alcança apenas publicações sanitizadas e ativas.
 - Executados os consultores de segurança e desempenho. Não surgiu alerta de RLS nas novas tabelas; foram criados os índices indicados para as novas chaves estrangeiras.
 - Preparados `index.html`, `README.md`, `.gitignore`, migrações versionadas e cópia local do módulo de Regimento Interno para que a versão publicada não dependa de caminhos externos ao repositório.
+
+## 2026-10-29 — Publicação inicial
+
+- Autenticada e confirmada a conta pessoal `sostena-boop` no GitHub CLI.
+- Criado o repositório público `sostena-boop/desenho-organizacional` após autorização explícita de Juarez sobre a visibilidade do código e dos dados organizacionais incorporados.
+- Enviado o commit inicial `b311322` para a branch `main`.
+- Ativado o GitHub Pages com HTTPS em `https://sostena-boop.github.io/desenho-organizacional/`.
+- Verificado: build do Pages concluído sem erro; endereço público respondeu HTTP 200; página inicial, projeto, cards da consulta, comparativo de cargos e módulo de Regimento Interno carregaram no ambiente publicado.
+- A versão publicada ainda grava o trabalho no navegador. As tabelas Supabase estão prontas, mas a autenticação e a persistência da interface ficam para a próxima etapa.
