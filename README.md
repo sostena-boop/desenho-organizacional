@@ -4,9 +4,11 @@ Ferramenta para elaborar e comparar propostas de estrutura organizacional, simul
 
 ## Estado atual
 
-Esta primeira versão publicada preserva o funcionamento do protótipo validado. Os dados de trabalho ainda são guardados no navegador. A estrutura de persistência autenticada já foi criada no projeto Supabase `spuprocessos` e será conectada à interface na etapa seguinte.
+Esta versão preserva uma cópia local no navegador e acrescenta sincronização autenticada com o projeto Supabase `spuprocessos`. Usuários cadastrados podem carregar e salvar automaticamente o projeto, criar versões manuais e restaurá-las na aba **Notas e histórico**.
 
 As tabelas usam o prefixo `desenho_` para permanecerem separadas das demais ferramentas do mesmo projeto. Todas têm RLS; os dados de trabalho pertencem ao usuário autenticado, e somente uma publicação sanitizada pode ser consultada sem login.
+
+O cliente do navegador usa `@supabase/supabase-js` fixado na versão `2.118.0`. `supabase-config.js` contém apenas a URL e a chave publicável; nenhuma chave administrativa deve ser incluída no repositório.
 
 ## Executar localmente
 
@@ -26,3 +28,5 @@ Depois acesse `http://127.0.0.1:8767/`.
 ## Segurança e privacidade
 
 Não publique arquivos JSON de backup: eles podem conter propostas, notas e históricos de trabalho.
+
+O projeto Supabase está com novos cadastros desativados. O login da ferramenta aceita somente contas previamente cadastradas no projeto.

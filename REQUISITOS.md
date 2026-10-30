@@ -613,3 +613,14 @@ Os cards de unidades mantidas, alteradas, criadas e extintas também funcionarã
 - Os mesmos quatro filtros serão usados no quadro comparativo interno e na prévia de consulta.
 - Clicar novamente no card ativo retirará o filtro.
 
+## Decisões — rodada 15
+
+### Persistência autenticada e versões
+
+- O navegador manterá uma cópia local para permitir continuidade em caso de indisponibilidade ou antes do login.
+- Depois da autenticação, o projeto e o cenário corrente serão sincronizados automaticamente com as tabelas `desenho_*` do projeto Supabase `spuprocessos`.
+- Cada usuário autenticado acessará somente os projetos de sua propriedade, conforme RLS.
+- A ferramenta permitirá salvar retratos manuais numerados e restaurá-los pela aba “Notas e histórico”.
+- A chave usada no navegador será exclusivamente a chave publicável; chaves administrativas não farão parte do código.
+- Novos cadastros permanecerão desativados; o acesso será oferecido apenas a contas previamente cadastradas no projeto.
+

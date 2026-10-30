@@ -13,7 +13,7 @@ A consulta pública será uma página própria, somente leitura, gerada a partir
 
 ## Estado atual
 
-Primeiro protótipo local consolidado em `ferramenta-transicao.html`. Não houve publicação no GitHub nem integração com o Supabase.
+Protótipo publicado no GitHub Pages e conectado ao projeto Supabase `spuprocessos`. A ferramenta funciona sem login com cópia local; depois da autenticação, o projeto corrente também é sincronizado e pode receber versões recuperáveis.
 
 O protótipo contém:
 
@@ -33,6 +33,9 @@ O protótipo contém:
 - botões de passagem do desenho para o regimento e do regimento para o desenho;
 - prévia local da consulta pública, com tabelas lado a lado da estrutura atual e da proposta, destaques por cor e cargos/pontos agregados;
 - backup JSON recolhido como recurso temporário do protótipo, a ser retirado quando houver persistência publicada;
+- acesso por e-mail/senha ou link/código para contas já cadastradas no Supabase;
+- salvamento remoto automático com cópia local de segurança;
+- versões manuais e restauração na aba de Notas e histórico;
 - simulador rápido carregado de `simulador-de-cargos-original.html`;
 - protótipo mais recente de Regimento Interno carregado de `../../Produção de Textos Normativos/Regimento Interno/modulo_DECIP_regimento_interno_3.html`.
 
@@ -87,9 +90,9 @@ Publicação inicial concluída:
 - repositório: `https://github.com/sostena-boop/desenho-organizacional`;
 - GitHub Pages: `https://sostena-boop.github.io/desenho-organizacional/`.
 
-1. Conectar a interface às tabelas `desenho_*` já criadas no Supabase `spuprocessos`.
-2. Completar o gerenciamento de vários cenários e a escolha do cenário principal.
-3. Implementar validações de publicação e marcos/versionamento mais completos.
+1. Cadastrar a conta pessoal que editará a ferramenta no Auth do projeto `spuprocessos` e validar o primeiro login ponta a ponta.
+2. Completar o gerenciamento de vários projetos/cenários e a escolha do cenário principal.
+3. Implementar a publicação sanitizada da consulta em página separada e somente leitura.
 4. Projetar a geração de DOCX para o projeto e para o esqueleto do regimento.
 5. Revisar as fontes e a vigência da tabela de cargos/pontos com SIORG e ato normativo.
 
@@ -107,5 +110,6 @@ Publicação inicial concluída:
 - A vigência da tabela de remuneração e pontos precisa ser documentada antes de uso oficial.
 - A base local é uma fotografia e não deve ser tratada como sincronizada automaticamente com o SIORG.
 - Categorias CCE 2/3 e FCE 2/3/4 precisam permanecer aderentes ao ato vigente.
-- A versão pública ainda é somente uma prévia local; não existe publicação nem controle de acesso.
-- O protótipo ainda usa armazenamento no navegador; colaboração e histórico multiusuário dependerão da etapa posterior de arquitetura no Supabase.
+- A consulta pública ainda é uma prévia dentro da ferramenta; falta gerar uma publicação sanitizada em página separada.
+- O Auth do projeto está com novos cadastros desativados. O e-mail pessoal informado ainda precisa ser cadastrado ou convidado antes do primeiro teste autenticado.
+- O fluxo atual abre o projeto mais recentemente atualizado do usuário; a tela de escolha entre vários projetos e cenários ainda não foi implementada.

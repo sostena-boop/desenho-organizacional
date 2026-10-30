@@ -95,3 +95,12 @@
 - Ativado o GitHub Pages com HTTPS em `https://sostena-boop.github.io/desenho-organizacional/`.
 - Verificado: build do Pages concluído sem erro; endereço público respondeu HTTP 200; página inicial, projeto, cards da consulta, comparativo de cargos e módulo de Regimento Interno carregaram no ambiente publicado.
 - A versão publicada ainda grava o trabalho no navegador. As tabelas Supabase estão prontas, mas a autenticação e a persistência da interface ficam para a próxima etapa.
+
+## 2026-10-30 — Integração da interface com Supabase
+
+- Adicionada à interface a autenticação por senha ou por link/código para contas já cadastradas no projeto `spuprocessos`.
+- Conectados o projeto e o cenário corrente às tabelas `desenho_projetos` e `desenho_cenarios`, com salvamento remoto automático e cópia local preservada.
+- Adicionadas versões manuais numeradas em `desenho_revisoes`, listagem na aba “Notas e histórico” e restauração mediante confirmação.
+- Fixada a dependência do cliente Supabase em `@supabase/supabase-js@2.118.0`; a configuração publicada contém somente URL e chave publicável.
+- Verificado: JavaScript inline com sintaxe válida; interface sem login; diálogo de acesso; painel de versões; chave publicável sem permissão anônima sobre projetos privados; leitura anônima limitada à tabela de publicações.
+- Pendência: novos cadastros estão desativados no Auth e o e-mail pessoal informado ainda não é usuário do projeto. O teste autenticado ponta a ponta depende de cadastrar ou convidar essa conta.

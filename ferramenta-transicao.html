@@ -223,6 +223,10 @@
   /* ── Navegação privada e módulos ── */
   .oculta{display:none !important;}
   .cab-inicio{background:var(--tinta); color:#fff; padding:28px 30px;}
+  .cab-inicio-topo{display:flex; justify-content:space-between; align-items:flex-start; gap:18px;}
+  .acesso-resumo{display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end; text-align:right;}
+  .acesso-resumo small{display:block; color:#dbe7ef; max-width:34ch;}
+  .acesso-resumo button{white-space:nowrap;}
   .cab-inicio h1{font:600 1.7rem Georgia,"Times New Roman",serif;}
   .cab-inicio p{margin-top:5px; max-width:72ch; color:#dbe7ef;}
   .inicio{max-width:1180px; margin:0 auto; padding:28px 24px 48px;}
@@ -289,6 +293,11 @@
   .grupo-notas-unidade{border:1px solid var(--linha); background:#fff; margin-bottom:10px;}
   .grupo-notas-unidade>div:first-child{display:flex; justify-content:space-between; align-items:center; gap:10px; padding:9px 11px; background:#f1f5f7; border-bottom:1px solid var(--linha);}
   .grupo-notas-unidade .conteudo-notas{padding:4px 10px 10px;}
+  .versoes-lista{display:grid; gap:8px;}
+  .versao-item{display:flex; justify-content:space-between; align-items:center; gap:12px; border:1px solid var(--linha); background:#fff; padding:9px 11px;}
+  .versao-item small{display:block; color:var(--cinza); margin-top:2px;}
+  .status-sistema{font-size:.76rem; color:var(--cinza); margin-top:8px; min-height:1.2em;}
+  .status-sistema.erro{color:var(--carimbo);}.status-sistema.ok{color:var(--ok);}
 
   /* ── Estrutura com navegação e editor lateral ── */
   .estrutura-layout{display:grid; grid-template-columns:minmax(390px,1fr) minmax(480px,1.15fr); gap:14px; align-items:start;}
@@ -349,7 +358,7 @@
   .arvore-publica .publica-filhos{padding:0 10px 8px 18px;}
   .arvore-publica .publica-meta{font-size:.76rem; color:var(--cinza); padding:0 11px 8px;}
   @media(max-width:900px){.comparacao-publica-grid{grid-template-columns:1fr;}}
-  @media(max-width:760px){.consulta-resumo,.resumo-publico{grid-template-columns:1fr 1fr;}.reuniao-grid{grid-template-columns:1fr;}.projeto-meta .subtitulo{min-width:100%;}.consulta-topo{display:block;}.consulta-topo button{margin-top:10px;}}
+  @media(max-width:760px){.consulta-resumo,.resumo-publico{grid-template-columns:1fr 1fr;}.reuniao-grid{grid-template-columns:1fr;}.projeto-meta .subtitulo{min-width:100%;}.consulta-topo{display:block;}.consulta-topo button{margin-top:10px;}.cab-inicio-topo{display:block;}.acesso-resumo{justify-content:flex-start; text-align:left; margin-top:16px;}}
 
   dialog{border:1px solid var(--linha); border-radius:5px; padding:0; max-width:520px; width:calc(100% - 30px); color:var(--tinta);}
   dialog::backdrop{background:rgba(16,40,59,.42);}
@@ -360,8 +369,10 @@
 
 <section id="telaInicio">
   <div class="cab-inicio">
-    <h1>Desenho Organizacional</h1>
-    <p>Área privada para elaborar propostas de estrutura, fazer cálculos rápidos de cargos e trabalhar minutas de regimento interno.</p>
+    <div class="cab-inicio-topo">
+      <div><h1>Desenho Organizacional</h1><p>Área privada para elaborar propostas de estrutura, fazer cálculos rápidos de cargos e trabalhar minutas de regimento interno.</p></div>
+      <div class="acesso-resumo"><small id="statusAcessoInicio">Cópia local neste navegador</small><button class="botao-secundario" type="button" id="btAcessoInicio">Entrar para sincronizar</button></div>
+    </div>
   </div>
   <main class="inicio">
     <h2>Ferramentas</h2>
@@ -436,6 +447,8 @@
   <span class="sep"></span>
   <button id="btPrevia" type="button">Pré-visualizar consulta</button>
   <button id="btRegimentoDoDesenho" type="button" onclick="abrirVinculoModulos('desenho-regimento')">Criar regimento deste desenho</button>
+  <button id="btSalvarVersao" type="button" disabled>Salvar versão</button>
+  <button id="btAcessoProjeto" type="button">Entrar para sincronizar</button>
   <button id="btZerar" type="button">Recomeçar</button>
   <details class="backup-prototipo"><summary>Backup do protótipo</summary><div><button id="btSalvar" type="button">Baixar backup (.json)</button><label class="btn" tabindex="0">Restaurar backup<input type="file" id="inAbrir" accept=".json"></label><small>Este recurso é temporário e será retirado quando houver gravação no sistema publicado.</small></div></details>
   <span class="autosave" id="autosave">—</span>
@@ -532,10 +545,15 @@
       <p class="explica" id="resumoNotasUnidades"></p>
       <div id="notasPorUnidade"></div>
     </div>
+    <div class="painel">
+      <h3>Versões salvas no sistema</h3>
+      <p class="explica">Uma versão é um retrato recuperável do cenário. O salvamento automático continua registrando o trabalho corrente.</p>
+      <div class="versoes-lista" id="listaVersoesSupabase"><p class="vazio">Entre no sistema para consultar as versões.</p></div>
+    </div>
   </div>
 </main>
 
-<footer>Protótipo local. As alterações são guardadas neste navegador e podem ser exportadas em JSON.</footer>
+<footer>As alterações são mantidas neste navegador. Quando você entra, o projeto também é sincronizado com o sistema e pode ter versões recuperáveis.</footer>
 </section>
 
 <dialog id="dlgNovaUnidade">
@@ -559,8 +577,33 @@
   </form>
 </dialog>
 
+<dialog id="dlgAcesso">
+  <div class="dialogo-corpo">
+    <h2 style="font:600 1.05rem Georgia,serif;margin-bottom:8px;">Acesso e sincronização</h2>
+    <div id="acessoDesconectado">
+      <p class="explica">Use um e-mail já cadastrado no projeto SPU Processos do Supabase. Você receberá um link ou código de acesso.</p>
+      <label class="campo" for="emailAcesso">E-mail</label><input type="email" id="emailAcesso" autocomplete="email" placeholder="seu-email@exemplo.com">
+      <label class="campo" for="senhaAcesso" style="margin-top:10px;">Senha, se a conta usar senha</label><input type="password" id="senhaAcesso" autocomplete="current-password">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;"><button class="botao-primario" type="button" id="btEntrarSenha">Entrar com senha</button><button class="botao-secundario" type="button" id="btEnviarAcesso">Enviar link ou código</button></div>
+      <div id="areaCodigoAcesso" class="oculta" style="margin-top:14px;">
+        <label class="campo" for="codigoAcesso">Código recebido</label><input type="text" id="codigoAcesso" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="Digite o código">
+        <button class="botao-primario" type="button" id="btConfirmarAcesso" style="margin-top:10px;">Confirmar código</button>
+      </div>
+    </div>
+    <div id="acessoConectado" class="oculta">
+      <p>Conectado como <strong id="emailConectado"></strong>.</p>
+      <p class="explica" style="margin-top:6px;">O projeto aberto é sincronizado automaticamente. O navegador continua mantendo uma cópia local.</p>
+      <button class="botao-secundario" type="button" id="btSairAcesso">Sair desta conta</button>
+    </div>
+    <p class="status-sistema" id="mensagemAcesso" role="status"></p>
+  </div>
+  <div class="dialogo-acoes"><button class="botao-secundario" type="button" id="btFecharAcesso">Fechar</button></div>
+</dialog>
+
 <div class="aviso-flutuante" id="toast"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.min.js"></script>
+<script src="supabase-config.js"></script>
 <script src="dados-estrutura-spu.js"></script>
 <script>
 "use strict";
@@ -748,7 +791,9 @@ const CODIGOS_VINCULADOS = CODIGOS_CARGO.filter(c=>/^(CCE\s+[23]|FCE\s+[234])\./
    ══════════════════════════════════════════════════════════════════════ */
 
 const CHAVE_LOCAL = "ferramenta-transicao-spu-v2";
+const CHAVE_VINCULO_SUPABASE = "desenho-organizacional-cenario-supabase-v1";
 let cenario = null;
+let cenarioRecuperadoLocal = false;
 let selecionadoReg = null;
 let selecionadoEstrutura = null;
 let paiNovaUnidade = "1986";
@@ -757,6 +802,16 @@ let filtroEstrutura = "";
 let filtroComparativo = "todas";
 let filtroConsulta = "todas";
 let direcaoVinculo = null;
+let clienteSupabase = null;
+let usuarioSupabase = null;
+let projetoSupabaseId = null;
+let cenarioSupabaseId = null;
+let timerSalvamentoSupabase = null;
+let salvandoSupabase = false;
+let repetirSalvamentoSupabase = false;
+let sincronizacaoSuspensa = false;
+let sincronizandoEntrada = false;
+let ignorarGuardar = false;
 const abertos = new Set();
 
 const $ = s => document.querySelector(s);
@@ -1451,11 +1506,13 @@ function avisar(msg){
 }
 
 function guardar(){
+  if(ignorarGuardar) return;
   cenario.atualizadoEm = new Date().toISOString();
   try{
     localStorage.setItem(CHAVE_LOCAL, JSON.stringify(cenario));
-    $("#autosave").textContent = "guardado neste navegador às " +
-      new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+    const hora = new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+    $("#autosave").textContent = usuarioSupabase ? `guardado localmente às ${hora} · aguardando sincronização` : `guardado neste navegador às ${hora}`;
+    if(!sincronizacaoSuspensa) agendarSalvamentoSupabase();
   }catch(err){
     $("#autosave").textContent = "não foi possível guardar neste navegador — exporte o .json";
   }
@@ -1468,6 +1525,221 @@ function recuperar(){
     const d = JSON.parse(bruto);
     return (d && Array.isArray(d.unidades)) ? prepararCenario(d) : null;
   }catch(err){ return null; }
+}
+
+function mensagemAcesso(texto="", classe=""){
+  const alvo=$("#mensagemAcesso");
+  alvo.textContent=texto; alvo.className=`status-sistema ${classe}`.trim();
+}
+
+function atualizarInterfaceAcesso(){
+  const conectado=!!usuarioSupabase;
+  $("#acessoDesconectado").classList.toggle("oculta",conectado);
+  $("#acessoConectado").classList.toggle("oculta",!conectado);
+  $("#btSalvarVersao").disabled=!conectado||!cenarioSupabaseId;
+  $("#btAcessoInicio").textContent=conectado?"Conta e sincronização":"Entrar para sincronizar";
+  $("#btAcessoProjeto").textContent=conectado?"Conta":"Entrar para sincronizar";
+  if(conectado){
+    $("#emailConectado").textContent=usuarioSupabase.email||"usuário autenticado";
+    $("#statusAcessoInicio").textContent=cenarioSupabaseId?`Sincronizado com ${usuarioSupabase.email}`:`Conectando o projeto a ${usuarioSupabase.email}`;
+  }else{
+    $("#statusAcessoInicio").textContent="Cópia local neste navegador";
+    $("#listaVersoesSupabase").innerHTML='<p class="vazio">Entre no sistema para consultar as versões.</p>';
+  }
+}
+
+function abrirAcesso(){
+  mensagemAcesso(usuarioSupabase?(cenarioSupabaseId?"Projeto conectado e com salvamento automático.":"Conectando o projeto..."):"");
+  $("#dlgAcesso").showModal();
+  setTimeout(()=>$(usuarioSupabase?"#btSairAcesso":"#emailAcesso")?.focus(),30);
+}
+
+async function entrarComSenha(){
+  if(!clienteSupabase) return mensagemAcesso("O serviço de sincronização não foi carregado.","erro");
+  const email=$("#emailAcesso").value.trim(), password=$("#senhaAcesso").value;
+  if(!email||!password) return mensagemAcesso("Informe o e-mail e a senha.","erro");
+  mensagemAcesso("Verificando o acesso...");
+  const {error}=await clienteSupabase.auth.signInWithPassword({email,password});
+  if(error) return mensagemAcesso(`Não foi possível entrar: ${error.message}`,"erro");
+  $("#senhaAcesso").value=""; mensagemAcesso("Acesso confirmado. Carregando o projeto...","ok");
+}
+
+async function enviarAcesso(){
+  if(!clienteSupabase) return mensagemAcesso("O serviço de sincronização não foi carregado.","erro");
+  const email=$("#emailAcesso").value.trim();
+  if(!email) return mensagemAcesso("Informe o e-mail cadastrado.","erro");
+  mensagemAcesso("Solicitando o acesso...");
+  const options={shouldCreateUser:false};
+  if(location.protocol==="https:") options.emailRedirectTo=location.origin+location.pathname;
+  const {error}=await clienteSupabase.auth.signInWithOtp({email,options});
+  if(error) return mensagemAcesso(`Não foi possível enviar: ${error.message}`,"erro");
+  $("#areaCodigoAcesso").classList.remove("oculta");
+  mensagemAcesso("Mensagem enviada. Abra o link recebido ou informe o código acima.","ok");
+  $("#codigoAcesso").focus();
+}
+
+async function confirmarCodigoAcesso(){
+  if(!clienteSupabase) return;
+  const email=$("#emailAcesso").value.trim(), token=$("#codigoAcesso").value.replace(/\s/g,"");
+  if(!email||!token) return mensagemAcesso("Informe o e-mail e o código recebido.","erro");
+  mensagemAcesso("Confirmando o código...");
+  const {error}=await clienteSupabase.auth.verifyOtp({email,token,type:"email"});
+  if(error) return mensagemAcesso(`Código não confirmado: ${error.message}`,"erro");
+  $("#codigoAcesso").value=""; mensagemAcesso("Acesso confirmado. Carregando o projeto...","ok");
+}
+
+async function sairAcesso(){
+  if(clienteSupabase) await clienteSupabase.auth.signOut();
+  $("#dlgAcesso").close(); avisar("Você saiu. A cópia deste navegador foi mantida.");
+}
+
+function projetoParaBanco(){
+  const p=cenario.projeto||{};
+  const meta={livre:"sem_meta",manter:"manter",reduzir:"reduzir",aumentar:"aumentar"}[p.metaTipo]||"sem_meta";
+  return {
+    aberto_em:String(p.abertoEm||cenario.criadoEm||new Date().toISOString()).slice(0,10),
+    prazo:p.prazo||null, processo_sei:p.processoSei||null, subtitulo:p.subtitulo||null,
+    estado:p.estado==="Concluída"?"concluida":"em_elaboracao", meta_tipo:meta,
+    meta_pontos:Math.max(0,Number(p.metaPontos)||0), atualizado_em:new Date().toISOString()
+  };
+}
+
+function aplicarProjetoDoBanco(projeto){
+  const p=cenario.projeto;
+  p.abertoEm=projeto.aberto_em?`${projeto.aberto_em}T12:00:00`:p.abertoEm;
+  p.prazo=projeto.prazo||""; p.processoSei=projeto.processo_sei||""; p.subtitulo=projeto.subtitulo||"";
+  p.estado=projeto.estado==="concluida"?"Concluída":"Em elaboração";
+  p.metaTipo={sem_meta:"livre",manter:"manter",reduzir:"reduzir",aumentar:"aumentar"}[projeto.meta_tipo]||"livre";
+  p.metaPontos=Number(projeto.meta_pontos)||0;
+}
+
+async function criarProjetoSupabase(){
+  const {data:projeto,error:erroProjeto}=await clienteSupabase.from("desenho_projetos").insert(projetoParaBanco()).select("*").single();
+  if(erroProjeto) throw erroProjeto;
+  projetoSupabaseId=projeto.id;
+  const {data:cenarioBanco,error:erroCenario}=await clienteSupabase.from("desenho_cenarios").insert({projeto_id:projeto.id,nome:cenario.nome||"Cenário A",principal:true,dados:cenario}).select("*").single();
+  if(erroCenario) throw erroCenario;
+  cenarioSupabaseId=cenarioBanco.id;
+  localStorage.setItem(CHAVE_VINCULO_SUPABASE,cenarioSupabaseId);
+  registrarHistorico("sistema","Projeto conectado ao salvamento do sistema.");
+  guardar();
+}
+
+async function sincronizarAoEntrar(){
+  if(!clienteSupabase||!usuarioSupabase||sincronizandoEntrada) return;
+  sincronizandoEntrada=true; atualizarInterfaceAcesso();
+  try{
+    $("#autosave").textContent="conectando ao sistema...";
+    const {data:projetos,error}=await clienteSupabase.from("desenho_projetos").select("*").order("atualizado_em",{ascending:false}).limit(1);
+    if(error) throw error;
+    const projeto=projetos?.[0];
+    if(!projeto){
+      await criarProjetoSupabase();
+    }else{
+      projetoSupabaseId=projeto.id;
+      const {data:cenarios,error:erroCenario}=await clienteSupabase.from("desenho_cenarios").select("*").eq("projeto_id",projeto.id).order("principal",{ascending:false}).order("atualizado_em",{ascending:false}).limit(1);
+      if(erroCenario) throw erroCenario;
+      const remoto=cenarios?.[0];
+      if(!remoto){
+        const {data:novo,error:erroNovo}=await clienteSupabase.from("desenho_cenarios").insert({projeto_id:projeto.id,nome:cenario.nome||"Cenário A",principal:true,dados:cenario}).select("*").single();
+        if(erroNovo) throw erroNovo; cenarioSupabaseId=novo.id;
+      }else{
+        cenarioSupabaseId=remoto.id;
+        const mesmoVinculo=localStorage.getItem(CHAVE_VINCULO_SUPABASE)===remoto.id;
+        const localMaisNovo=Date.parse(cenario.atualizadoEm||0)>Date.parse(remoto.atualizado_em||0);
+        if(cenarioRecuperadoLocal&&mesmoVinculo&&localMaisNovo){
+          await salvarSupabaseAgora(true);
+        }else if(remoto.dados&&Array.isArray(remoto.dados.unidades)){
+          sincronizacaoSuspensa=true; ignorarGuardar=true;
+          try{
+            cenario=prepararCenario(structuredClone(remoto.dados)); aplicarProjetoDoBanco(projeto); renderTudo();
+            localStorage.setItem(CHAVE_LOCAL,JSON.stringify(cenario));
+          }finally{ ignorarGuardar=false; sincronizacaoSuspensa=false; }
+        }
+      }
+      localStorage.setItem(CHAVE_VINCULO_SUPABASE,cenarioSupabaseId);
+    }
+    atualizarInterfaceAcesso(); await renderVersoesSupabase();
+    $("#autosave").textContent=`sincronizado às ${new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}`;
+    mensagemAcesso("Projeto conectado e com salvamento automático.","ok");
+  }catch(err){
+    console.error(err); mensagemAcesso(`Não foi possível sincronizar: ${err.message}`,"erro");
+    $("#autosave").textContent="cópia local preservada · falha na sincronização";
+  }finally{ sincronizandoEntrada=false; atualizarInterfaceAcesso(); }
+}
+
+function agendarSalvamentoSupabase(){
+  if(!clienteSupabase||!usuarioSupabase||!projetoSupabaseId||!cenarioSupabaseId) return;
+  clearTimeout(timerSalvamentoSupabase);
+  timerSalvamentoSupabase=setTimeout(()=>salvarSupabaseAgora(),900);
+}
+
+async function salvarSupabaseAgora(forcar=false){
+  if(!clienteSupabase||!usuarioSupabase||!projetoSupabaseId||!cenarioSupabaseId) return;
+  if(salvandoSupabase){ repetirSalvamentoSupabase=true; return; }
+  salvandoSupabase=true; clearTimeout(timerSalvamentoSupabase);
+  try{
+    const agora=new Date().toISOString();
+    const {error:erroProjeto}=await clienteSupabase.from("desenho_projetos").update(projetoParaBanco()).eq("id",projetoSupabaseId);
+    if(erroProjeto) throw erroProjeto;
+    const {error:erroCenario}=await clienteSupabase.from("desenho_cenarios").update({nome:cenario.nome||"Cenário A",dados:cenario,atualizado_em:agora}).eq("id",cenarioSupabaseId);
+    if(erroCenario) throw erroCenario;
+    localStorage.setItem(CHAVE_VINCULO_SUPABASE,cenarioSupabaseId);
+    $("#autosave").textContent=`sincronizado às ${new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}`;
+    if(forcar) atualizarInterfaceAcesso();
+  }catch(err){
+    console.error(err); $("#autosave").textContent="cópia local preservada · falha na sincronização";
+  }finally{
+    salvandoSupabase=false;
+    if(repetirSalvamentoSupabase){ repetirSalvamentoSupabase=false; setTimeout(()=>salvarSupabaseAgora(),80); }
+  }
+}
+
+async function renderVersoesSupabase(){
+  const alvo=$("#listaVersoesSupabase");
+  if(!clienteSupabase||!usuarioSupabase||!cenarioSupabaseId){ alvo.innerHTML='<p class="vazio">Entre no sistema para consultar as versões.</p>'; return; }
+  const {data,error}=await clienteSupabase.from("desenho_revisoes").select("id,versao,resumo,criado_em").eq("cenario_id",cenarioSupabaseId).order("versao",{ascending:false});
+  if(error){ alvo.innerHTML=`<p class="vazio">Não foi possível consultar as versões: ${esc(error.message)}</p>`; return; }
+  alvo.innerHTML=(data||[]).map(v=>`<div class="versao-item"><div><b>Versão ${v.versao}</b><small>${esc(v.resumo||"Retrato manual do cenário")} · ${dataHora(v.criado_em)}</small></div><button type="button" class="botao-secundario" data-restaurar-versao="${v.id}">Restaurar</button></div>`).join("")||'<p class="vazio">Nenhuma versão manual foi salva ainda.</p>';
+  $$('[data-restaurar-versao]').forEach(b=>b.addEventListener("click",()=>restaurarVersaoSupabase(b.dataset.restaurarVersao)));
+}
+
+async function salvarVersaoSupabase(){
+  if(!usuarioSupabase||!cenarioSupabaseId) return abrirAcesso();
+  await salvarSupabaseAgora(true);
+  const {data:ultima,error:erroConsulta}=await clienteSupabase.from("desenho_revisoes").select("versao").eq("cenario_id",cenarioSupabaseId).order("versao",{ascending:false}).limit(1);
+  if(erroConsulta) return avisar("Não foi possível consultar as versões.");
+  const versao=(ultima?.[0]?.versao||0)+1;
+  const resumo=`Versão ${versao} salva manualmente`;
+  const {error}=await clienteSupabase.from("desenho_revisoes").insert({cenario_id:cenarioSupabaseId,versao,snapshot:cenario,resumo});
+  if(error) return avisar(`Não foi possível salvar a versão: ${error.message}`);
+  registrarHistorico("versão",`${resumo}.`); guardar(); await renderVersoesSupabase(); avisar(`Versão ${versao} salva.`);
+}
+
+async function restaurarVersaoSupabase(id){
+  if(!confirm("Restaurar esta versão? O estado atual continuará no histórico apenas se você o tiver salvo como versão.")) return;
+  const {data,error}=await clienteSupabase.from("desenho_revisoes").select("versao,snapshot").eq("id",id).single();
+  if(error||!data?.snapshot) return avisar("Não foi possível restaurar a versão.");
+  sincronizacaoSuspensa=true; cenario=prepararCenario(structuredClone(data.snapshot)); registrarHistorico("versão",`Versão ${data.versao} restaurada.`); renderTudo(); sincronizacaoSuspensa=false;
+  guardar(); await salvarSupabaseAgora(true); avisar(`Versão ${data.versao} restaurada.`);
+}
+
+async function tratarSessaoSupabase(sessao){
+  const novoUsuario=sessao?.user||null, mudou=novoUsuario?.id!==usuarioSupabase?.id;
+  usuarioSupabase=novoUsuario;
+  if(!novoUsuario){ projetoSupabaseId=null; cenarioSupabaseId=null; clearTimeout(timerSalvamentoSupabase); }
+  atualizarInterfaceAcesso();
+  if(novoUsuario&&mudou) await sincronizarAoEntrar();
+}
+
+async function iniciarSupabase(){
+  const config=window.DESENHO_SUPABASE;
+  if(!window.supabase?.createClient||!config?.url||!config?.publishableKey){ atualizarInterfaceAcesso(); return; }
+  clienteSupabase=window.supabase.createClient(config.url,config.publishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+  const {data,error}=await clienteSupabase.auth.getSession();
+  if(error) mensagemAcesso(`Falha ao verificar a sessão: ${error.message}`,"erro");
+  await tratarSessaoSupabase(data?.session||null);
+  clienteSupabase.auth.onAuthStateChange((_evento,sessao)=>setTimeout(()=>tratarSessaoSupabase(sessao),0));
 }
 
 function baixar(nome, conteudo, tipo){
@@ -1787,6 +2059,14 @@ $("#inAbrir").addEventListener("change", ev=>{ if(ev.target.files[0]) importarJs
 $("#btCsv").addEventListener("click", exportarCsv);
 $("#btTxtCmp").addEventListener("click", exportarComparativo);
 $("#btPrevia").addEventListener("click",()=>{ renderConsulta(); mostrarTela("telaConsulta"); });
+$("#btSalvarVersao").addEventListener("click",salvarVersaoSupabase);
+$("#btAcessoInicio").addEventListener("click",abrirAcesso);
+$("#btAcessoProjeto").addEventListener("click",abrirAcesso);
+$("#btFecharAcesso").addEventListener("click",()=>$("#dlgAcesso").close());
+$("#btEntrarSenha").addEventListener("click",entrarComSenha);
+$("#btEnviarAcesso").addEventListener("click",enviarAcesso);
+$("#btConfirmarAcesso").addEventListener("click",confirmarCodigoAcesso);
+$("#btSairAcesso").addEventListener("click",sairAcesso);
 $("#voltarProjetoConsulta").addEventListener("click",()=>mostrarTela("telaProjeto"));
 $("#btInicio").addEventListener("click",()=>mostrarTela("telaInicio"));
 $("#abrirProjeto").addEventListener("click",()=>mostrarTela("telaProjeto"));
@@ -1809,9 +2089,14 @@ $("#btZerar").addEventListener("click", ()=>{
 });
 
 renderReferencia();
-cenario = recuperar() || cenarioNovo();
-renderTudo();
+const cenarioInicialRecuperado = recuperar();
+cenarioRecuperadoLocal=!!cenarioInicialRecuperado;
+cenario = cenarioInicialRecuperado || cenarioNovo();
+ignorarGuardar=true; renderTudo(); ignorarGuardar=false;
+if(cenarioRecuperadoLocal) $("#autosave").textContent="carregado deste navegador";
+else guardar();
 mostrarTela("telaInicio");
+iniciarSupabase();
 </script>
 </body>
 </html>
